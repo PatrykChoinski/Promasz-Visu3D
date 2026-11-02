@@ -8,6 +8,7 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ### CI tylko dla master / main, stabilniejszy test uruchomienia strony
 - Workflow CI tylko przy pushu i pull requescie do `master` / `main` (wcześniej każdy branch – także V36Suwalki, V38, develop/*); ręcznie – workflow_dispatch.
+- GitHub Pages było wyłączone w repo (publikacja: „Failed to create deployment (status: 404)”) – włączone z publikacją przez GitHub Actions; publikacja także przy ręcznym uruchomieniu workflow na `master`.
 - Test uruchomienia strony (`scripts/smoke-test.mjs`): serwer z testowym PLC ma 60 s na start (na runnerze CI startował ponad 20 s – „brak odpowiedzi: /api/health”), zapytania o zmienne ponawiane przy chwilowym błędzie sieci („fetch failed”), w logu informacja, gdy proces testowy się zakończy.
 
 ## 2026-10-23
