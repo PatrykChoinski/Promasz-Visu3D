@@ -31,10 +31,24 @@ function run(args, name) {
   p.stdout.on('data', (d) => process.stdout.write(`[${name}] ${d}`));
   p.stderr.on('data', (d) => process.stderr.write(`[${name}] ${d}`));
   procs.push(p);
+  // proces zakonczony w trakcie testu (np. serwer padl) - widac w logu CI
+  p.on('exit', (code, signal) => { if (!stopping) log(`${name} zakonczony (kod ${code}${signal ? `, sygnal ${signal}` : ''})`); });
   return p;
 }
+let stopping = false;
 
-async function waitHttp(url, ms = 20000) {
+// fetch z ponowieniem przy chwilowym bledzie sieci (wolny runner CI)
+async function fetchRetry(url, opts, tries = 5) {
+  for (let i = 1; ; i++) {
+    try { return await fetch(url, opts); } catch (err) {
+      if (i >= tries) throw new Error(`${url}: ${err.cause?.code || err.message}`);
+      await sleep(1000);
+    }
+  }
+}
+
+// start serwera na runnerze CI bywa wolny (Node 22 + SQLite, budowa wezlow OPC UA) - do 60 s
+async function waitHttp(url, ms = 60000) {
   const end = Date.now() + ms;
   while (Date.now() < end) {
     try { if ((await fetch(url)).ok) return; } catch { /* jeszcze nie */ }
@@ -153,17 +167,17 @@ async function main() {
       // podpiecie zmiennych: kazda zmienna z konfiguracji znaleziona w OPC UA; typ i wartosc - z subskrypcji: zmienne
       // w tle od razu, pozostale po zgloszeniu jako ekran (POST /api/plc/watch) - tu wszystkie naraz
       const api = `http://127.0.0.1:${PORT_ONLINE}/api`;
-      const all = (await (await fetch(`${api}/variables`)).json()).variables;
+      const all = (await (await fetchRetry(`${api}/variables`)).json()).variables;
       const noNode = all.filter((v) => !v.found).map((v) => v.name);
       if (noNode.length) throw new Error(`zmienne PLC bez wezla OPC UA: ${noNode.join(', ')}`);
       // jeden ekran - najwyzej 400 zmiennych: wszystkie jako kilka stron (cid)
       for (let i = 0; i < all.length; i += 200) {
-        await fetch(`${api}/plc/watch`, { method: 'POST', headers: { 'content-type': 'application/json' },
+        await fetchRetry(`${api}/plc/watch`, { method: 'POST', headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ cid: `smoke${i}`, keys: all.slice(i, i + 200).map((v) => v.key) }) });
       }
       let missing = [];
       for (let i = 0; i < 40; i++) {
-        const vars = (await (await fetch(`${api}/variables`)).json()).variables;
+        const vars = (await (await fetchRetry(`${api}/variables`)).json()).variables;
         missing = vars.filter((v) => !v.dataType || v.value === null).map((v) => v.name);
         if (!missing.length) break;
         await new Promise((r) => setTimeout(r, 250));
@@ -211,5 +225,6 @@ try {
   console.error(`[smoke] BLAD: ${e.message}`);
   process.exitCode = 1;
 } finally {
+  stopping = true;
   for (const p of procs) p.kill();
 }

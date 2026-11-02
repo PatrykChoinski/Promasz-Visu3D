@@ -4,6 +4,12 @@ Zmiany w Promasz Visu3D (VizuApp) – wizualizacji cięcia piły mostowej Promas
 (zgłoszenie [#128](https://github.com/Induprogress/Promasz_PilaJednosuportowa/issues/128)
 w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); historia commitów została przeniesiona tutaj.
 
+## 2026-11-02
+
+### CI tylko dla master / main, stabilniejszy test uruchomienia strony
+- Workflow CI tylko przy pushu i pull requescie do `master` / `main` (wcześniej każdy branch – także V36Suwalki, V38, develop/*); ręcznie – workflow_dispatch.
+- Test uruchomienia strony (`scripts/smoke-test.mjs`): serwer z testowym PLC ma 60 s na start (na runnerze CI startował ponad 20 s – „brak odpowiedzi: /api/health”), zapytania o zmienne ponawiane przy chwilowym błędzie sieci („fetch failed”), w logu informacja, gdy proces testowy się zakończy.
+
 ## 2026-10-23
 
 ### Bazowanie w trybie PLC: odświeżanie przycisków po połączeniu i restarcie serwera

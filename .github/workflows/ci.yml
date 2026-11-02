@@ -1,4 +1,5 @@
-# CI Visu3D: przy kazdym pushu i pull requescie testy na Windows (jak na maszynie):
+# CI Visu3D: przy pushu do master / main i pull requescie do nich testy na Windows (jak na maszynie); inne branche
+# (develop/*, V36Suwalki, V38 ...) bez testow - recznie: workflow_dispatch:
 #   npm test (geometria, ruch, operacje, OPC UA z testowym PLC, ...) i test uruchomienia strony w przegladarce
 #   (scripts/smoke-test.mjs: serwer bez PLC, serwer z testowym PLC przez OPC UA, wersja statyczna GitHub Pages).
 # Po udanych testach push do master publikuje wersje statyczna na GitHub Pages (https://<konto>.github.io/<repo>/).
@@ -6,8 +7,9 @@ name: CI
 
 on:
   push:
-    branches: ['**']
+    branches: [master, main]
   pull_request:
+    branches: [master, main]
   workflow_dispatch:
 
 permissions:
