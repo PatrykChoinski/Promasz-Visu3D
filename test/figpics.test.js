@@ -18,7 +18,6 @@ test('kazda figura automatu ma rysunek (obrazek z HMI albo schemat SVG) i pliki 
     assert.ok(pic.img || pic.svg || pic.roof, fig.id);
     if (pic.img) assert.ok(exists(pic.img), `brak pliku ${pic.img}`);
     if (pic.svg) assert.match(pic.svg, /^<svg[\s\S]*<\/svg>$/);
-    if (pic.roof) for (const r of pic.roof) for (const on of [0, 1]) assert.ok(exists(`img/figures/roof_wall${r.wall}_${on}.svg`));
   }
   assert.equal(Object.keys(FIGURE_PICS).filter((id) => !FIGURES.some((f) => f.id === id)).length, 0, 'rysunki dla nieistniejacych figur');
 });
@@ -43,12 +42,13 @@ test('warianty obrazka wg przelacznika jak w HMI: typ trapezu, blatu, ksiazki, c
     const seen = new Set();
     for (const v of opts(id, k)) {
       const pic = figurePicture(id, { [k]: v });
-      assert.equal(pic.img, `img/figures/${prefix}_${v}.svg`);
+      assert.equal(pic.img, `img/figures/${prefix}_${v}.${prefix === 'book' ? 'png' : 'svg'}`);
       assert.ok(exists(pic.img));
       seen.add(pic.img);
     }
     assert.equal(seen.size, opts(id, k).length, `${id}: rozne obrazki dla roznych typow`);
   }
   const roof = figurePicture('ROOFS', { wall1: true, wall2: false, wall3: true, wall4: false });
-  assert.deepEqual(roof.roof.map((r) => [r.wall, r.on]), [[1, true], [2, false], [3, true], [4, false]]);
+  assert.deepEqual(roof.walls.map((r) => [r.wall, r.on]), [[1, true], [2, false], [3, true], [4, false]]);
+  assert.equal((roof.svg.match(/#2BD39A/g) || []).length, 2, 'zielone tylko sciany wykonywane');
 });

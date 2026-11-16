@@ -6,6 +6,11 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-16
 
+### Daszki jako sciety ostroslup, Ksiazka z obrazkiem z HMI
+- Daszki: jeden rysunek SVG - sciety ostroslup w widoku z gory ze scianami pod 45 st. (gorna plaszczyzna odsunieta rowno z kazdej strony), numery scian 1-4 jak w HMI (1 dol, 2 prawa, 3 gora, 4 lewa). Sciana zaznaczona do wykonania (`bRoof1..4Wall`) - zielona, pominieta - przerywany obrys. Zamiast 8 obrazkow scian.
+- Ksiazka: wrocone obrazki z HMI (`book_0.png`, `book_1.png`).
+- Sprawdzone: Daszki ze sciana 2 odznaczona, Ksiazka w Automacie; `npm test` 192/192.
+
 ### Nowe rysunki figur automatu (SVG)
 - 36 obrazkow figur wyciagnietych z HMI (PNG z bialym tlem) zastapionych rysunkami SVG w nowym stylu: przezroczyste tlo, jasny gruby kontur, linie wymiarowe ze strzalkami i duze pogrubione litery - te same ksztalty, warianty (trapez 0-6, blat 0-6, ksiazka, cwiercwalek) i litery co w HMI. Daszki: sciana cieta pod katem na zielono, pozostale jako obrys. Generator `scripts/gen-figure-svgs.mjs` (`node scripts/gen-figure-svgs.mjs`).
 - Schematy figur bez obrazka w HMI (Narozniki, Dziury, Ociekacze, Frez stol, Naroza L, Indukcja, Wielokat) w tych samych kolorach. Ramka rysunku na tle panelu (bez bialego pola).

@@ -79,14 +79,7 @@ F.curved_stairs = () => svg(380, 220, shape('M30,110 Q190,30 350,110 L330,140 Q1
   + `<line x1="190" y1="70" x2="190" y2="30" stroke="${C.dim}" stroke-width="2" marker-start="url(#ar)"/>${T(212, 30, 'R')}`
   + vdim(108, 142, 370, 'H', 28) + hdim(30, 350, 172, 'D'));
 
-const bookTop = (y) => poly([[90, y], [330, y], [330, y + 30], [90, y + 30]]) + vdim(y, y + 30, 346, 'B', 26) + hdim(90, 330, y + 44, 'A', 26) + axes(30, y + 30, 'Y', 'X');
-F.book_0 = () => svg(380, 250, bookTop(18)
-  + poly([[90, 140], [330, 140], [330, 190], [90, 190]]) + thin('M96,160 C140,140 170,182 210,160 S280,140 324,160')
-  + vdim(140, 190, 70, 'D', 26, false) + hdim(90, 330, 210, 'A', 26) + axes(30, 190, 'Z', 'X'));
-F.book_1 = () => svg(380, 250, bookTop(18)
-  + poly([[90, 140], [330, 140], [330, 190], [90, 190]]) + thin('M96,152 C140,138 170,170 210,152 S280,138 324,152') + thin('M96,176 C140,190 170,160 210,176 S280,190 324,176')
-  + vdim(140, 190, 70, 'D', 26, false) + hdim(90, 330, 210, 'A', 26) + axes(30, 190, 'Z', 'X'));
-
+// ksiazka: zostaje obrazek z HMI (book_0.png, book_1.png)
 F.quater_round_0 = () => svg(320, 160, shape('M20,95 L20,85 Q20,40 70,40 L300,40 L300,95 Z') + vdim(40, 95, 60, 'D', 26).replace('x="82"', 'x="84"') + hdim(20, 300, 120, 'A'));
 F.quater_round_1 = () => svg(320, 160, shape('M20,95 Q20,50 65,50 L255,50 Q300,50 300,95 Z') + vdim(50, 95, 80, 'D', 26) + hdim(20, 300, 120, 'A'));
 
@@ -119,9 +112,7 @@ F.worktop_4 = () => worktop(400, 230, [[40, 25], [210, 25], [210, 80], [320, 80]
 F.worktop_5 = () => worktop(400, 230, [[50, 25], [330, 25], [330, 200], [180, 200], [180, 140], [50, 140]], ['E', 'D', 'C', 'B', 'A', 'F']);
 F.worktop_6 = () => worktop(400, 230, [[50, 25], [330, 25], [330, 120], [180, 120], [180, 190], [50, 190]], ['E', 'D', 'C', 'B', 'A', 'F']);
 
-// daszki: sciana (trapez) - zielona: cieta pod katem; obrazek rozciagany na przycisk (preserveAspectRatio none)
-const roof = (on) => svg(320, 120, shape('M8,112 L312,112 L250,8 L70,8 Z', on ? C.on : C.off), ' preserveAspectRatio="none"', 0);
-for (const w of [1, 2, 3, 4]) { F[`roof_wall${w}_0`] = () => roof(false); F[`roof_wall${w}_1`] = () => roof(true); }
+// daszki: rysunek liczony w src/shared/figpics.js (roofSvg - sciety ostroslup, zaznaczone sciany)
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   fs.mkdirSync(OUT, { recursive: true });

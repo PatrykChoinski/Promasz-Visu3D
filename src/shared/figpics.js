@@ -8,7 +8,7 @@
 // w tym samym stylu co rysunki SVG z scripts/gen-figure-svgs.mjs (jasny kontur, strzalki wymiarow, pogrubione litery,
 // przezroczyste tlo).
 
-const IMG = (name) => ({ img: `img/figures/${name}.svg` });
+const IMG = (name, ext = 'svg') => ({ img: `img/figures/${name}.${ext}` });
 const START = { fFigureXStartPosition: 'X', fFigureYStartPosition: 'Y' };
 
 // --- SVG w stylu rysunkow HMI ------------------------------------------------------------------
@@ -67,6 +67,26 @@ function polygonSvg(v) {
     + poly.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="6" fill="#FF8A1F"/>${TXT(x + 14, y - 14, String(i + 1), 18)}`).join(''));
 }
 
+// Daszki: sciety ostroslup z gory - zewnetrzny prostokat A x B, gorna plaszczyzna odsunieta o d (skosy 45 st.)
+function roofSvg(v) {
+  const [x0, y0, x1, y1, d] = [30, 20, 335, 205, 60];
+  const [i0, j0, i1, j1] = [x0 + d, y0 + d, x1 - d, y1 - d];
+  const walls = {
+    1: [[x0, y1], [x1, y1], [i1, j1], [i0, j1]], 2: [[x1, y0], [x1, y1], [i1, j1], [i1, j0]],
+    3: [[x0, y0], [x1, y0], [i1, j0], [i0, j0]], 4: [[x0, y0], [x0, y1], [i0, j1], [i0, j0]],
+  };
+  const mid = { 1: [(x0 + x1) / 2, (y1 + j1) / 2], 2: [(x1 + i1) / 2, (y0 + y1) / 2], 3: [(x0 + x1) / 2, (y0 + j0) / 2], 4: [(x0 + i0) / 2, (y0 + y1) / 2] };
+  const body = [1, 2, 3, 4].map((w) => {
+    const on = !!v[`wall${w}`];
+    const pts = walls[w].map((p) => p.join(',')).join(' ');
+    return `<polygon points="${pts}" fill="${on ? '#2BD39A' : 'rgba(228,231,234,0.08)'}" stroke="#E4E7EA" stroke-width="4" stroke-linejoin="round"${on ? '' : ' stroke-dasharray="10 7"'}/>`
+      + `<text x="${mid[w][0]}" y="${mid[w][1]}" fill="${on ? '#0A1F33' : '#B4C3D1'}" font-family="Segoe UI, Arial, sans-serif" font-weight="700" font-size="22" text-anchor="middle" dominant-baseline="central">${w}</text>`;
+  }).join('') + `<rect x="${i0}" y="${j0}" width="${i1 - i0}" height="${j1 - j0}" stroke="#E4E7EA" stroke-width="3" fill="none"/>`
+    + `${dim(x0, y1 + 24, x1, y1 + 24)}${TXT((x0 + x1) / 2, y1 + 46, 'A')}${dim(x1 + 24, y0, x1 + 24, y1)}${TXT(x1 + 46, (y0 + y1) / 2, 'B')}`
+    + `<text x="${(i0 + i1) / 2}" y="${(j0 + j1) / 2}" fill="#B4C3D1" font-family="Segoe UI, Arial, sans-serif" font-size="16" text-anchor="middle" dominant-baseline="central">45°</text>`;
+  return svg(body);
+}
+
 // --- figury -------------------------------------------------------------------------------------
 
 // letters: zmienna PLC (w etykiecie pola) -> litera z ekranu HMI; picture(v) -> {img} | {svg} | {roof: [...]}
@@ -80,14 +100,9 @@ export const FIGURE_PICS = {
   HOLES: { screen: 'Dziury (152)', letters: { fFigureLength: 'A', fFigureWidth: 'B' }, picture: () => SVG.HOLES() },
   ROOFS: {
     screen: 'Daszki (137)', letters: { fFigureLength: 'A', fFigureWidth: 'B' },
-    // 4 przyciski scian (bRoof1..4Wall): zielony - sciana cieta pod katem; polozenie, rozmiar i obrot (nAngle,
-    // zgodnie z ruchem wskazowek zegara) jak na ekranie HMI. Uwaga: w HMI sciana 1 (dol) ma nAngle 180 jak sciana 3 (gora)
-    picture: (v) => ({ roof: [
-      { wall: 1, on: !!v.wall1, x: 58, y: 295, w: 426, h: 119, angle: 180 },
-      { wall: 2, on: !!v.wall2, x: 409, y: 46, w: 159, h: 319, angle: 270 },
-      { wall: 3, on: !!v.wall3, x: 78, y: 0, w: 426, h: 120, angle: 180 },
-      { wall: 4, on: !!v.wall4, x: 0, y: 45, w: 160, h: 319, angle: 90 },
-    ], size: [568, 414], labels: [{ t: 'A', x: 284, y: 440 }, { t: 'B', x: 600, y: 207 }] }),
+    // sciety ostroslup w widoku z gory, sciany pod 45 st.; przyciski scian bRoof1..4Wall jak w HMI
+    // (1 dol, 2 prawa, 3 gora, 4 lewa): zielona - sciana wykonywana, przerywany obrys - pominieta
+    picture: (v) => ({ ...roofSvg(v), walls: [1, 2, 3, 4].map((w) => ({ wall: w, on: !!v[`wall${w}`] })) }),
   },
   SINK_DRAINER: { screen: 'Ociekacze (138)', letters: { fFigureLength: 'A', fFigureWidth: 'B' }, picture: () => SVG.SINK_DRAINER() },
   ELIPSE_ONE_POINT: { screen: 'Elipsa (139)', letters: { fFigureLength: 'A', fFigureWidth: 'B' }, picture: () => IMG('ellipse') },
@@ -101,7 +116,7 @@ export const FIGURE_PICS = {
   BOOKS: {
     screen: 'Ksiazka (148)',
     letters: { fFigureLength: 'A', fFigureWidth: 'B', fFigureDepthStart: 'D', fBookDepth2: 'D2', fBookDepth3: 'D3', fBookDepth4: 'D4', fBookDepth5: 'D5' },
-    picture: (v) => IMG(`book_${clamp(v.bookType, 0, 1)}`),
+    picture: (v) => IMG(`book_${clamp(v.bookType, 0, 1)}`, 'png'), // obrazek z HMI (bez zmian)
   },
   QUATER_ROUND: { screen: 'Cwiercwalek (149)', letters: { fFigureLength: 'A', fFigureWidth: 'B', fFigureDepthStart: 'D' }, picture: (v) => IMG(`quater_round_${clamp(v.quaterType, 0, 1)}`) },
   TRAPEZOID45: { screen: 'Trapez (153)', letters: { fFigureWidth: 'B', fFigureHeight: 'H' }, picture: () => IMG('trapezoid45') },
