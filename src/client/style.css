@@ -531,3 +531,5 @@ button.svcGoto:disabled { background: var(--raised); }
 #homeModes button.active small { color: #3a4652; }
 .depthBtns button.active { background: var(--light); color: var(--ink); }
 .saveRow button, table.manPts button { color: var(--text); }
+.bar .plcStop, .bar .plcStop:hover:not(:disabled) { background: var(--bad); border-color: var(--bad); color: var(--ink); }
+.bar #plcPause.active { background: var(--warn); color: var(--ink); }
