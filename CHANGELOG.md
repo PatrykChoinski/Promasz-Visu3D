@@ -6,6 +6,13 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-16
 
+### Rysunki figur w proporcjach wymiarow; Indukcja i Ociekacz z rzutem bocznym
+- Wszystkie figury (poza Ksiazka - obrazek z HMI) rysowane z wpisanych wymiarow (`src/shared/figdraw.js`): proporcje A x B, trojkaty, trapezy 0-6, krzyz (ramiona H / W), schody lukowe (R, D, H), serce, elipsy, cwiercwalek, figury frezu. Wymiar 0 (albo ksztalt, ktory sie nie zamyka - np. blat, w ktorym dlugosci bokow do siebie nie pasuja) - rysunek bazowy jak dotad. Blat: obrys z dlugosci A..H, gdy sie zamyka.
+- Indukcja: otwor A x B, ramka odsunieta o O dookola (wymiar O), rzut boczny: przelot w srodku i wpust ramki na glebokosc D.
+- Ociekacz: jak planowanie stolu frezem - rowki zygzakiem co skok (S), plus rzut boczny ze spadkiem dna D1 -> D2 (dwie glebokosci) albo z katem spadku.
+- Usuniete statyczne pliki SVG figur i generator `scripts/gen-figure-svgs.mjs` (rysunki liczone na stronie).
+- Sprawdzone: wszystkie figury pily i frezu rysuja sie w Automacie, proporcje (np. 2500 x 600, 3000 x 500, blat 5 z wymiarow), wymiar 0 - rysunek bazowy; testy proporcji i rzutow bocznych; `npm test` 194/194.
+
 ### Daszki: kat, proporcje, daszek wewnetrzny, sciany klikane
 - Rysunek w proporcjach A x B (Dlugosc x Szerokosc), szerokosc scian rosnie z katem pochylenia tarczy (tan `fRoofBAngle`), na srodku wpisany kat zamiast stalego 45.
 - Daszek wewnetrzny (`bFigureInner`) - ostroslup do gory nogami: ciemne dno i przekroj zaglebienia w rogu (zewnetrzny - przekroj ostroslupa).

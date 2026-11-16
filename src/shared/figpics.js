@@ -8,6 +8,8 @@
 // w tym samym stylu co rysunki SVG z scripts/gen-figure-svgs.mjs (jasny kontur, strzalki wymiarow, pogrubione litery,
 // przezroczyste tlo).
 
+import { DRAW } from './figdraw.js';
+
 const IMG = (name, ext = 'svg') => ({ img: `img/figures/${name}.${ext}` });
 const START = { fFigureXStartPosition: 'X', fFigureYStartPosition: 'Y' };
 
@@ -163,5 +165,8 @@ export function fieldLetter(figId, field) {
 // Rysunek figury dla wartosci pol v
 export function figurePicture(figId, v = {}) {
   const pic = FIGURE_PICS[figId];
-  return pic ? { ...pic.picture(v), screen: pic.screen } : null;
+  if (!pic) return null;
+  // rysunek z wpisanych wymiarow (figdraw.js); Ksiazka - obrazek z HMI, Daszki i Wielokat - wlasne rysunki
+  if (DRAW[figId]) return { svg: DRAW[figId](v), screen: pic.screen };
+  return { ...pic.picture(v), screen: pic.screen };
 }
