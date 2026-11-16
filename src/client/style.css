@@ -399,3 +399,135 @@ table.depthTable input { width: 100%; box-sizing: border-box; text-align: right;
 
 /* bez opisow "jak to dziala" na ekranach (stany i bledy zostaja) */
 .howto { display: none !important; }
+
+/* ===== Nowy styl HMI: granat z projektu HMI (#164B73) + szarosci (#B4B4B4), zaokraglone, pomarancz tylko akcje =====
+   Nadpisuje kolory powyzej - jeden blok, zeby latwo wrocic do starego wygladu. */
+:root {
+  --bg: #0a1f33; --panel: #12395a; --surface: #164b73; --bar: #0a1f33; --rail: #0e2b45;
+  --text: #f2f5f8; --muted: #b4c3d1; --accent: #ff8a1f; --accent-soft: rgba(255, 138, 31, 0.18);
+  --brand: #e4e7ea; --gray: #b4b4b4; --light: #e4e7ea; --ink: #0a1f33; --raised: #3a4652;
+  --ok: #2bd39a; --bad: #ff4d5e; --warn: #ffb547; --border: #2a5c85; --radius: 14px;
+  --shadow: 0 4px 18px rgba(0, 0, 0, 0.35); --jog: #b4b4b4; --jog-press: #ff8a1f;
+}
+body { background: var(--bg); }
+button { border-radius: 12px; border-color: transparent; background: var(--raised); color: var(--text); }
+button:hover:not(:disabled) { background: #4a5764; border-color: transparent; }
+button:active:not(:disabled) { background: #556270; }
+button.primary, .filebtn { background: var(--accent); border-color: var(--accent); color: var(--ink); border-radius: 12px; }
+button.primary:hover:not(:disabled) { background: #ff9d45; border-color: #ff9d45; }
+.bar { background: var(--bar); color: var(--text); box-shadow: none; padding: 8px 12px; }
+.bar button { color: var(--muted); border-radius: 12px; }
+.bar button:hover:not(:disabled) { background: var(--surface); color: var(--text); }
+.bar button.tool.active, #manOpen.active, .seg button.active { background: var(--light); color: var(--ink); }
+.brand .ic { color: var(--gray); }
+.seg { background: var(--surface); border-radius: 999px; padding: 4px; }
+.seg button { border-radius: 999px; }
+.chip { background: var(--surface); border-radius: 999px; color: var(--text); }
+.chip select { background: var(--raised); color: var(--text); border-radius: 999px; }
+.authUser { color: var(--muted); }
+.authUser b { color: var(--text); }
+.tabs.side { background: var(--rail); margin: 0 6px 6px; border-radius: 16px; }
+.tabs.side button { color: var(--muted); border-radius: 14px; }
+.tabs.side button:hover:not(:disabled) { background: var(--surface); }
+.tabs.side button.active { background: var(--light); color: var(--ink); box-shadow: none; }
+#viewWrap { border-radius: 16px; overflow: hidden; margin-bottom: 6px; }
+#hud { background: rgba(10, 31, 51, 0.8); color: var(--text); border-radius: 12px; }
+.vtools { background: rgba(18, 57, 90, 0.92); box-shadow: var(--shadow); border-radius: 16px; }
+.vtools button, .vtools .tog { color: var(--muted); border-radius: 12px; background: transparent; }
+.tog:hover { background: var(--surface); }
+.tog:has(input:checked) { color: var(--ink); background: var(--light); }
+.vtools .sep { background: var(--border); }
+#panel { background: var(--panel); border-left: none; margin: 0 6px 6px; border-radius: 16px; }
+.panelTitle { background: rgba(18, 57, 90, 0.96); border-bottom: 1px solid var(--border); color: var(--text); }
+.panelTitle .ic { color: var(--gray); }
+label { color: var(--muted); }
+label.cb { color: var(--text); }
+input[type=number], input[type=text], input[type=password], select {
+  background: var(--light); color: var(--ink); border: 2px solid transparent; border-radius: 12px; font-weight: 600; }
+input[type=number]:focus, input[type=text]:focus, input[type=password]:focus, select:focus { border-color: var(--accent); box-shadow: none; }
+select option { color: var(--ink); background: #fff; }
+h3, summary { color: var(--light); }
+details, .speedGroup, .svcCard, .speedPos div { background: var(--surface); border: none; border-radius: 14px; }
+.grid2.actual output, .svcItem output { background: var(--raised); color: var(--text); border: none; border-radius: 12px; }
+.letter { background: var(--gray); color: var(--ink); border-radius: 999px; }
+.figPic { background: var(--light); border: none; border-radius: 14px; }
+.figPic .src { color: #5a6672; }
+.cncPreview { border: none; border-radius: 14px; }
+table.prog tr.active td { background: var(--accent-soft); }
+table.prog input, table.pts input, table.dyn input, table.depthTable input { border-radius: 10px; }
+table.depthTable th, table.depthTable td { border-color: var(--border); }
+table.plcVars td { border-top-color: var(--border); }
+table.plcVars tr.bad td { background: rgba(255, 77, 94, 0.15); }
+footer { background: var(--bar); color: var(--muted); margin: 0 6px 6px; border-radius: 16px; }
+.mono { color: var(--text); }
+.mono.vel { color: var(--gray); }
+.statusline { color: var(--muted); }
+#conn.ok { color: var(--ok); }
+#conn.bad { color: var(--bad); }
+.win { background: var(--panel); border: none; border-radius: 18px; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5); }
+.winHead { background: var(--surface); }
+.winHead button { background: transparent; }
+.lockInfo { background: rgba(255, 77, 94, 0.15); border: none; border-radius: 14px; color: #ffb3ba; }
+#alarmOpen.on { background: var(--bad); color: var(--ink); }
+@keyframes alarmBlink { 50% { background: #a32d3a; } }
+.alarmCount { background: var(--light); color: var(--bad); }
+.alarmTable th, .alarmTable td { border-bottom-color: var(--border); }
+.alarmTable tr.on td { color: var(--bad); }
+#manPages { background: var(--surface); }
+#manPages button { color: var(--muted); background: transparent; border-radius: 999px; }
+#manPages button.active { background: var(--light); color: var(--ink); }
+.hmiScreen { background: var(--bg); }
+.hmiPanel { background: var(--panel); border-radius: 1.6cqw; box-shadow: none; }
+.hmiMid { color: var(--border); }
+.hmiTitle { color: var(--text); }
+.hmiTitle .ic { color: var(--gray); }
+.hmiBtn { background: var(--gray); color: var(--ink); border-radius: 1.4cqw; box-shadow: none; }
+.hmiBtn:hover:not(:disabled) { background: #c8c8c8; }
+.hmiBtn:active:not(:disabled), .hmiBtn.pressed { background: var(--accent); color: var(--ink); box-shadow: none; }
+.hmiBtn[data-toggle].on { background: var(--ok); color: var(--ink); }
+.hmiBtn.dark, #manContinuous { background: var(--surface); color: var(--text); }
+.hmiBtn.dark:hover:not(:disabled) { background: #1d5d8f; }
+#manContinuous.on { background: var(--accent); color: var(--ink); }
+.hmiBtn.stop { background: var(--bad); color: var(--ink); }
+.hmiBtn.stop:hover:not(:disabled) { background: #ff6b79; }
+.hmiBtn.link { background: var(--raised); color: var(--text); }
+.hmiBtn.link:hover:not(:disabled) { background: #4a5764; }
+.hmiBtn.laser { background: var(--surface); color: var(--text); }
+.hmiBtn.laser.on { background: var(--ok); color: var(--ink); }
+.hmiVal { background: var(--light); border: none; border-radius: 999px; }
+.hmiVal b, .hmiVal output { color: var(--ink); }
+.hmiInp b { color: var(--muted); }
+.hmiVal.blue { background: var(--surface); }
+.hmiVal.blue .ic, .hmiVal.blue output, .hmiVal.blue b { color: var(--text); }
+.hmiInp input { background: var(--light); color: var(--ink); border: none; border-radius: 999px; }
+.hmiSawTitle { color: var(--text); }
+.sawStart { background: var(--ok); border-color: var(--ok); color: var(--ink); }
+.sawStart:hover:not(:disabled) { background: #4be0ad; border-color: #4be0ad; }
+.sawStop, .plcStop { background: var(--bad); border-color: var(--bad); color: var(--ink); }
+.sawStop:hover:not(:disabled), .plcStop:hover { background: #ff6b79; }
+.stopBtn .ic, .stopBtn:hover .ic { color: var(--bad); }
+.plcStop .ic, .plcStop:hover .ic { color: var(--ink); }
+#plcPause.active { background: var(--warn); color: var(--ink); }
+.plcToast { background: var(--bad); color: var(--ink); border-radius: 999px; }
+.seg.sub { background: var(--surface); border: none; }
+.seg.sub button.active { background: var(--light); color: var(--ink); box-shadow: none; }
+.speedBar { background: var(--raised); border-radius: 999px; }
+.speedBar i { background: var(--accent); border-radius: 999px; }
+.speedBar span { color: var(--text); }
+.speedRow input { color: var(--ink); }
+.speedGroup h4, .svcCard h4 { color: var(--light); }
+.speedGroup h4 .ic { color: var(--gray); }
+.svcItem code { color: var(--muted); }
+button.svcBit { background: var(--raised); border-color: transparent; color: var(--text); }
+button.svcBit.on, button.svcBit.on:hover:not(:disabled) { background: var(--ok); border-color: transparent; color: var(--ink); }
+button.svcBit:not(.on):hover:not(:disabled) { background: #4a5764; }
+button.svcGoto { background: var(--gray); border-color: transparent; color: var(--ink); }
+button.svcGoto:disabled { background: var(--raised); }
+.serviceMore.active { background: var(--light); color: var(--ink); }
+.svcLamp { background: var(--raised); box-shadow: inset 0 0 0 2px var(--gray); }
+.svcLamp.on { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+#homeModes button small { color: var(--muted); }
+#homeModes button.active { background: var(--light); border-color: transparent; color: var(--ink); }
+#homeModes button.active small { color: #3a4652; }
+.depthBtns button.active { background: var(--light); color: var(--ink); }
+.saveRow button, table.manPts button { color: var(--text); }

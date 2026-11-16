@@ -4,6 +4,13 @@ Zmiany w Promasz Visu3D (VizuApp) – wizualizacji cięcia piły mostowej Promas
 (zgłoszenie [#128](https://github.com/Induprogress/Promasz_PilaJednosuportowa/issues/128)
 w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); historia commitów została przeniesiona tutaj.
 
+## 2026-11-16
+
+### Nowy styl HMI: granat i szarosci
+- Caly interfejs w stylu nowego HMI: ciemny granat z projektu HMI (`#164B73`, tlo `#0A1F33`), szarosci (`#B4B4B4`, jasne pola wartosci `#E4E7EA` z granatowym tekstem), zaokraglone karty (14-18 px) i pigulki (przelaczniki, pola w Ruchach recznych, licznik predkosci). Pomarancz tylko dla akcji (Start, przycisk glowny, aktywny krok, pasek predkosci), zielen OK, czerwien alarm/STOP. Aktywna zakladka, wybrany tryb i przelaczniki - jasnoszare.
+- Jeden blok na koncu `src/client/style.css` (nadpisuje kolory) - latwy powrot do starego wygladu. Tlo sceny 3D granatowe, siatka i osie jasniejsze (`view3d.js`).
+- Sprawdzone w przegladarce (offline): Bazowanie, Manual, Automat, Serwis, Predkosc, okno Ruchy reczne.
+
 ## 2026-11-02
 
 ### CI tylko dla master / main, stabilniejszy test uruchomienia strony

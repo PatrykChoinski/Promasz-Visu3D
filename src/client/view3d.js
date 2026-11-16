@@ -12,7 +12,7 @@ import { waterDrops, waterSpray } from '../shared/water.js';
 import { toolSpinMarks } from '../shared/toolspin.js';
 
 const COLORS = {
-  background: 0xeef1f4,
+  background: 0x0e2b45,
   material: 0xcdc6b8,
   materialEdge: 0x8d877a,
   wall: 0x5b4636,
@@ -20,8 +20,8 @@ const COLORS = {
   blade: 0x8fa6c1,
   bladeEdge: 0x1f5fa8,
   lowest: 0xd62728,
-  axis: 0x555555,
-  grid: 0xc9d0d8,
+  axis: 0xb4c3d1,
+  grid: 0x2a5c85,
   plan: 0xe07b00,
   planActive: 0xd62728,
   markStart: 0x2e7d32,
