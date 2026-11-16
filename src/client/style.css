@@ -450,8 +450,9 @@ h3, summary { color: var(--light); }
 details, .speedGroup, .svcCard, .speedPos div { background: var(--surface); border: none; border-radius: 14px; }
 .grid2.actual output, .svcItem output { background: var(--raised); color: var(--text); border: none; border-radius: 12px; }
 .letter { background: var(--gray); color: var(--ink); border-radius: 999px; }
-.figPic { background: var(--light); border: none; border-radius: 14px; }
-.figPic .src { color: #5a6672; }
+.figPic { background: var(--surface); border: none; border-radius: 14px; }
+.figPic .src { color: var(--muted); }
+.figPic .roof b { color: #fff; }
 .cncPreview { border: none; border-radius: 14px; }
 table.prog tr.active td { background: var(--accent-soft); }
 table.prog input, table.pts input, table.dyn input, table.depthTable input { border-radius: 10px; }

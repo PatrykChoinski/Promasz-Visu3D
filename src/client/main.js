@@ -974,7 +974,7 @@ function showFigPicture() {
         // obraz w ukladzie przed obrotem (przy 90 / 270 zamienione boki), srodek w srodku przycisku
         const side = r.angle === 90 || r.angle === 270;
         const [iw, ih] = side ? [r.h, r.w] : [r.w, r.h];
-        return `<img src="img/figures/roof_wall${r.wall}_${r.on ? 1 : 0}.png" alt="ściana ${r.wall}" style="left:${(r.x + r.w / 2) * k}px;top:${(r.y + r.h / 2) * k}px;`
+        return `<img src="img/figures/roof_wall${r.wall}_${r.on ? 1 : 0}.svg" alt="ściana ${r.wall}" style="left:${(r.x + r.w / 2) * k}px;top:${(r.y + r.h / 2) * k}px;`
           + `width:${iw * k}px;height:${ih * k}px;transform:translate(-50%,-50%) rotate(${r.angle || 0}deg)">`;
       }).join('')
       + pic.labels.map((l) => `<b style="left:${l.x * k}px;top:${l.y * k}px">${l.t}</b>`).join('') + '</div>';

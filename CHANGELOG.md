@@ -6,6 +6,11 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-16
 
+### Nowe rysunki figur automatu (SVG)
+- 36 obrazkow figur wyciagnietych z HMI (PNG z bialym tlem) zastapionych rysunkami SVG w nowym stylu: przezroczyste tlo, jasny gruby kontur, linie wymiarowe ze strzalkami i duze pogrubione litery - te same ksztalty, warianty (trapez 0-6, blat 0-6, ksiazka, cwiercwalek) i litery co w HMI. Daszki: sciana cieta pod katem na zielono, pozostale jako obrys. Generator `scripts/gen-figure-svgs.mjs` (`node scripts/gen-figure-svgs.mjs`).
+- Schematy figur bez obrazka w HMI (Narozniki, Dziury, Ociekacze, Frez stol, Naroza L, Indukcja, Wielokat) w tych samych kolorach. Ramka rysunku na tle panelu (bez bialego pola).
+- Sprawdzone: wszystkie figury piły w Automacie, 36 plikow serwowanych (200), schematy frezu; `npm test` 192/192.
+
 ### Nowy styl HMI: granat i szarosci
 - Caly interfejs w stylu nowego HMI: ciemny granat z projektu HMI (`#164B73`, tlo `#0A1F33`), szarosci (`#B4B4B4`, jasne pola wartosci `#E4E7EA` z granatowym tekstem), zaokraglone karty (14-18 px) i pigulki (przelaczniki, pola w Ruchach recznych, licznik predkosci). Pomarancz tylko dla akcji (Start, przycisk glowny, aktywny krok, pasek predkosci), zielen OK, czerwien alarm/STOP. Aktywna zakladka, wybrany tryb i przelaczniki - jasnoszare.
 - Jeden blok na koncu `src/client/style.css` (nadpisuje kolory) - latwy powrot do starego wygladu. Tlo sceny 3D granatowe, siatka i osie jasniejsze (`view3d.js`).

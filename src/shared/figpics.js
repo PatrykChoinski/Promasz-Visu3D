@@ -1,22 +1,23 @@
 // #138 Rysunki pogladowe figur automatu z literami wymiarow - jak ekrany figur w HMI (DIAScreen).
 //
-// Obrazki: wyciagniete z projektu DIAScreen (HMI/PilaJednosuportowaINNER.dpa, bank [Picture], PictureOffset
-// elementow ekranow figur 130..154) do src/client/img/figures. Wariant obrazka jak w HMI - wg zmiennej przelacznika
+// Obrazki: narysowane na nowo jako SVG (scripts/gen-figure-svgs.mjs -> src/client/img/figures) wg obrazkow z projektu
+// DIAScreen (HMI/PilaJednosuportowaINNER.dpa, ekrany figur 130..154) - te same ksztalty i litery. Wariant obrazka jak w HMI - wg zmiennej przelacznika
 // (iTrapezoidType, iWorktopType, iBookType, iQuaterRoundType; daszki - 4 przyciski scian bRoof1..4Wall).
 // Litery: tekst obok pola na ekranie figury (np. "A" obok HMI2.fFigureLength) - tu wg nazwy zmiennej PLC w etykiecie pola.
 // Figury bez obrazka w HMI (Narozniki, Ociekacze, Frez stol, Naroza L, Dziury, Indukcja, Wielokat) - schemat SVG
-// w tym samym stylu (czarny kontur, strzalki wymiarow, pogrubione litery).
+// w tym samym stylu co rysunki SVG z scripts/gen-figure-svgs.mjs (jasny kontur, strzalki wymiarow, pogrubione litery,
+// przezroczyste tlo).
 
-const IMG = (name) => ({ img: `img/figures/${name}.png` });
+const IMG = (name) => ({ img: `img/figures/${name}.svg` });
 const START = { fFigureXStartPosition: 'X', fFigureYStartPosition: 'Y' };
 
 // --- SVG w stylu rysunkow HMI ------------------------------------------------------------------
 
 const W = 400; const H = 270;
-const LINE = 'stroke="#000" stroke-width="6" fill="none" stroke-linejoin="miter"';
-const THIN = 'stroke="#000" stroke-width="2" fill="none"';
-const TXT = (x, y, t, size = 30) => `<text x="${x}" y="${y}" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="${size}" text-anchor="middle" dominant-baseline="middle">${t}</text>`;
-const DEFS = '<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#000"/></marker></defs>';
+const LINE = 'stroke="#E4E7EA" stroke-width="5" fill="none" stroke-linejoin="round"';
+const THIN = 'stroke="#B4C3D1" stroke-width="2" fill="none"';
+const TXT = (x, y, t, size = 30) => `<text x="${x}" y="${y}" fill="#FFFFFF" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-weight="700" font-size="${size}" text-anchor="middle" dominant-baseline="middle">${t}</text>`;
+const DEFS = '<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#B4C3D1"/></marker></defs>';
 const dim = (x0, y0, x1, y1) => `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" ${THIN} marker-start="url(#ar)" marker-end="url(#ar)"/>`;
 const svg = (body) => ({ svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">${DEFS}${body}</svg>` });
 
@@ -36,11 +37,11 @@ const SVG = {
     + `${[[R.x0, R.y0], [R.x1, R.y0], [R.x1, R.y1], [R.x0, R.y1]].map(([x, y]) => hole(x, y, 14)).join('')}${frameDims()}`),
   // Ociekacz: rowki wzdluz X ze spadkiem w obszarze A x B
   SINK_DRAINER: () => svg(`${rect(R.x0, R.y0, R.x1, R.y1)}`
-    + `${[0, 1, 2, 3, 4].map((i) => { const y = R.y0 + 25 + i * 32; return `<line x1="${R.x0 + 20}" y1="${y}" x2="${R.x1 - 20}" y2="${y}" stroke="#000" stroke-width="4"/>`; }).join('')}${frameDims()}`),
+    + `${[0, 1, 2, 3, 4].map((i) => { const y = R.y0 + 25 + i * 32; return `<line x1="${R.x0 + 20}" y1="${y}" x2="${R.x1 - 20}" y2="${y}" stroke="#E4E7EA" stroke-width="4"/>`; }).join('')}${frameDims()}`),
   // Planowanie stolu: przejscia frezu A x B, glebokosc D
   MILL_TABLE: () => svg(`${rect(R.x0, R.y0, R.x1, R.y1)}`
     + `<polyline points="${[0, 1, 2, 3, 4, 5].map((i) => { const y = R.y0 + 15 + i * 30; return i % 2 ? `${R.x1 - 15},${y} ${R.x0 + 15},${y}` : `${R.x0 + 15},${y} ${R.x1 - 15},${y}`; }).join(' ')}" ${THIN.replace('stroke-width="2"', 'stroke-width="3"')}/>`
-    + `${frameDims()}${TXT(R.x0 - 30, (R.y0 + R.y1) / 2, 'D')}<text x="${R.x0 - 30}" y="${(R.y0 + R.y1) / 2 + 26}" font-family="Arial" font-size="13" text-anchor="middle">głęb.</text>`),
+    + `${frameDims()}${TXT(R.x0 - 30, (R.y0 + R.y1) / 2, 'D')}<text x="${R.x0 - 30}" y="${(R.y0 + R.y1) / 2 + 26}" fill="#B4C3D1" font-family="Arial" font-size="13" text-anchor="middle">głęb.</text>`),
   // Naroza L: ramiona H w 4 rogach prostokata A x B
   L_CORNERS: () => {
     const h = 55;
@@ -63,7 +64,7 @@ function polygonSvg(v) {
   const P = ([x, y]) => [40 + (x - x0) * k, H - 35 - (y - y0) * k];
   const poly = pts.map(P);
   return svg(`<polygon points="${poly.map((p) => p.join(',')).join(' ')}" ${LINE}/>`
-    + poly.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="5" fill="#d62728"/>${TXT(x + 14, y - 14, String(i + 1), 18)}`).join(''));
+    + poly.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="6" fill="#FF8A1F"/>${TXT(x + 14, y - 14, String(i + 1), 18)}`).join(''));
 }
 
 // --- figury -------------------------------------------------------------------------------------
