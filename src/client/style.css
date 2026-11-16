@@ -534,3 +534,7 @@ button.svcGoto:disabled { background: var(--raised); }
 .saveRow button, table.manPts button { color: var(--text); }
 .bar .plcStop, .bar .plcStop:hover:not(:disabled) { background: var(--bad); border-color: var(--bad); color: var(--ink); }
 .bar #plcPause.active { background: var(--warn); color: var(--ink); }
+/* Daszki: przyciski wszystkie / brak scian pod rysunkiem, sciany klikane */
+.roofBtns { display: flex; gap: 8px; justify-content: center; margin-top: 6px; }
+.roofBtns button { min-height: 36px; min-width: 110px; border-radius: 999px; }
+.figPic [data-wall]:hover polygon { stroke: var(--accent); }

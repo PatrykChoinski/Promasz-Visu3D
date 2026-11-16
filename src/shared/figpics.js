@@ -67,24 +67,41 @@ function polygonSvg(v) {
     + poly.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="6" fill="#FF8A1F"/>${TXT(x + 14, y - 14, String(i + 1), 18)}`).join(''));
 }
 
-// Daszki: sciety ostroslup z gory - zewnetrzny prostokat A x B, gorna plaszczyzna odsunieta o d (skosy 45 st.)
+// Daszki: sciety ostroslup z gory w proporcjach A x B; szerokosc scian rosnie z kat pochylenia tarczy (tan B),
+// na srodku wpisany kat. Daszek wewnetrzny (bFigureInner) - ostroslup do gory nogami (zaglebienie): ciemne dno,
+// przekroj w rogu. Sciany klikalne (data-wall) - strona przelacza bRoofNWall.
 function roofSvg(v) {
-  const [x0, y0, x1, y1, d] = [30, 20, 335, 205, 60];
+  const A = Math.max(1, Number(v.length) || 1); const B = Math.max(1, Number(v.width) || 1);
+  const ang = Number(v.bAngle) || 0;
+  const inner = !!v.inner;
+  const k = Math.min(290 / A, 170 / B);
+  const w = A * k; const h = B * k;
+  const x0 = 200 - w / 2; const y0 = 105 - h / 2; const x1 = x0 + w; const y1 = y0 + h;
+  const m = Math.min(w, h);
+  const t = Math.tan((Math.min(Math.max(Math.abs(ang), 0), 80) * Math.PI) / 180);
+  const d = Math.min(0.32 * m, Math.max(0.12 * m, 0.22 * m * t));
   const [i0, j0, i1, j1] = [x0 + d, y0 + d, x1 - d, y1 - d];
   const walls = {
     1: [[x0, y1], [x1, y1], [i1, j1], [i0, j1]], 2: [[x1, y0], [x1, y1], [i1, j1], [i1, j0]],
     3: [[x0, y0], [x1, y0], [i1, j0], [i0, j0]], 4: [[x0, y0], [x0, y1], [i0, j1], [i0, j0]],
   };
-  const mid = { 1: [(x0 + x1) / 2, (y1 + j1) / 2], 2: [(x1 + i1) / 2, (y0 + y1) / 2], 3: [(x0 + x1) / 2, (y0 + j0) / 2], 4: [(x0 + i0) / 2, (y0 + y1) / 2] };
-  const body = [1, 2, 3, 4].map((w) => {
-    const on = !!v[`wall${w}`];
-    const pts = walls[w].map((p) => p.join(',')).join(' ');
-    return `<polygon points="${pts}" fill="${on ? '#2BD39A' : 'rgba(228,231,234,0.08)'}" stroke="#E4E7EA" stroke-width="4" stroke-linejoin="round"${on ? '' : ' stroke-dasharray="10 7"'}/>`
-      + `<text x="${mid[w][0]}" y="${mid[w][1]}" fill="${on ? '#0A1F33' : '#B4C3D1'}" font-family="Segoe UI, Arial, sans-serif" font-weight="700" font-size="22" text-anchor="middle" dominant-baseline="central">${w}</text>`;
-  }).join('') + `<rect x="${i0}" y="${j0}" width="${i1 - i0}" height="${j1 - j0}" stroke="#E4E7EA" stroke-width="3" fill="none"/>`
-    + `${dim(x0, y1 + 24, x1, y1 + 24)}${TXT((x0 + x1) / 2, y1 + 46, 'A')}${dim(x1 + 24, y0, x1 + 24, y1)}${TXT(x1 + 46, (y0 + y1) / 2, 'B')}`
-    + `<text x="${(i0 + i1) / 2}" y="${(j0 + j1) / 2}" fill="#B4C3D1" font-family="Segoe UI, Arial, sans-serif" font-size="16" text-anchor="middle" dominant-baseline="central">45°</text>`;
-  return svg(body);
+  const mid = (pts) => [pts.reduce((s, p) => s + p[0], 0) / 4, pts.reduce((s, p) => s + p[1], 0) / 4];
+  const body = [1, 2, 3, 4].map((n) => {
+    const on = !!v[`wall${n}`];
+    const [mx, my] = mid(walls[n]);
+    return `<g data-wall="${n}" style="cursor:pointer"><title>Ściana ${n}</title>`
+      + `<polygon points="${walls[n].map((p) => p.map((c) => c.toFixed(1)).join(',')).join(' ')}" fill="${on ? '#2BD39A' : 'rgba(228,231,234,0.08)'}" stroke="#E4E7EA" stroke-width="4" stroke-linejoin="round"${on ? '' : ' stroke-dasharray="10 7"'}/>`
+      + `<text x="${mx}" y="${my}" fill="${on ? '#0A1F33' : '#B4C3D1'}" font-family="Segoe UI, Arial, sans-serif" font-weight="700" font-size="20" text-anchor="middle" dominant-baseline="central" pointer-events="none">${n}</text></g>`;
+  }).join('');
+  const top = `<rect x="${i0}" y="${j0}" width="${Math.max(0, i1 - i0)}" height="${Math.max(0, j1 - j0)}" fill="${inner ? 'rgba(0,0,0,0.35)' : 'none'}" stroke="#E4E7EA" stroke-width="3" pointer-events="none"/>`
+    + `<rect x="170" y="${(j0 + j1) / 2 - 15}" width="60" height="30" rx="15" fill="#0A1F33" stroke="#B4C3D1" stroke-width="1.5" pointer-events="none"/>`
+    + `<text x="200" y="${(j0 + j1) / 2}" fill="#FFFFFF" font-family="Segoe UI, Arial, sans-serif" font-weight="700" font-size="18" text-anchor="middle" dominant-baseline="central" pointer-events="none">${Math.round(ang * 10) / 10}°</text>`;
+  // przekroj: zewnetrzny - ostroslup (gora wezsza), wewnetrzny - zaglebienie (do gory nogami)
+  const sec = inner
+    ? `<path d="M2,232 L14,232 L24,254 L46,254 L56,232 L68,232 L68,264 L2,264 Z" fill="rgba(228,231,234,0.15)" stroke="#E4E7EA" stroke-width="2.5" stroke-linejoin="round"/>`
+    : `<path d="M2,264 L14,236 L56,236 L68,264 Z" fill="rgba(228,231,234,0.15)" stroke="#E4E7EA" stroke-width="2.5" stroke-linejoin="round"/>`;
+  const secTxt = `<text x="35" y="226" fill="#B4C3D1" font-family="Segoe UI, Arial, sans-serif" font-size="12" text-anchor="middle">${inner ? 'wewnętrzny' : 'zewnętrzny'}</text>`;
+  return svg(body + top + `${dim(x0, y1 + 20, x1, y1 + 20)}${TXT(200, y1 + 40, 'A')}${dim(x1 + 20, y0, x1 + 20, y1)}${TXT(x1 + 40, 105, 'B')}` + sec + secTxt);
 }
 
 // --- figury -------------------------------------------------------------------------------------

@@ -949,6 +949,11 @@ function showFig() {
     label.prepend(row);
   }
   for (const el of $$('#figFields [data-g]')) el.addEventListener('input', showFigPicture);
+  // Daszki: sciany wybierane klikaniem na rysunku - pola scian schowane
+  for (const n of [1, 2, 3, 4]) {
+    const lab = fig.id === 'ROOFS' ? fieldEl('fig', `wall${n}`)?.closest('label') : null;
+    if (lab) lab.hidden = true;
+  }
   // rodzaj ciecia figury = HMI.iManualInternal - ta sama zmienna co "Rodzaj" w Parametrach figury (Admin)
   const inner = fieldEl('fig', 'internal');
   if (inner) inner.addEventListener('change', () => { const ctx = fieldEl('figctx', 'internal'); if (ctx) ctx.value = inner.value; });
@@ -980,6 +985,27 @@ function showFigPicture() {
       + pic.labels.map((l) => `<b style="left:${l.x * k}px;top:${l.y * k}px">${l.t}</b>`).join('') + '</div>';
   }
   box.innerHTML = html;
+  if (pic.walls) roofWallControls(box);
+}
+
+// Daszki: sciany klikane na rysunku (przelaczaja bRoofNWall), przyciski wszystkie / zadna; pola scian schowane
+function roofWallControls(box) {
+  const setWalls = (fn) => {
+    for (const n of [1, 2, 3, 4]) {
+      const el = fieldEl('fig', `wall${n}`);
+      if (el) el.checked = fn(n, el.checked);
+    }
+    fieldEl('fig', 'wall1')?.dispatchEvent(new Event('input', { bubbles: true }));
+    fieldEl('fig', 'wall1')?.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+  for (const g of box.querySelectorAll('[data-wall]')) {
+    g.addEventListener('click', () => { const w = Number(g.dataset.wall); setWalls((n, on) => (n === w ? !on : on)); });
+  }
+  const row = document.createElement('div');
+  row.className = 'roofBtns';
+  row.innerHTML = '<button type="button" data-all="1" title="Wszystkie ściany">Wszystkie</button><button type="button" data-all="0" title="Bez ścian">Brak</button>';
+  for (const b of row.querySelectorAll('button')) b.addEventListener('click', () => setWalls(() => b.dataset.all === '1'));
+  box.append(row);
 }
 
 // "Wypelnij bufor": figura jak FiguresGeometricSt, bufor jak GetDemoProgram (aProgram* := aFigure*)

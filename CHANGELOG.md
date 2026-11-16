@@ -6,6 +6,12 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-16
 
+### Daszki: kat, proporcje, daszek wewnetrzny, sciany klikane
+- Rysunek w proporcjach A x B (Dlugosc x Szerokosc), szerokosc scian rosnie z katem pochylenia tarczy (tan `fRoofBAngle`), na srodku wpisany kat zamiast stalego 45.
+- Daszek wewnetrzny (`bFigureInner`) - ostroslup do gory nogami: ciemne dno i przekroj zaglebienia w rogu (zewnetrzny - przekroj ostroslupa).
+- Sciany wybierane klikaniem na rysunku (przelacza `bRoof1..4Wall`, kursor i obrys przy najechaniu), pola Sciana 1-4 schowane. Przyciski Wszystkie / Brak pod rysunkiem.
+- Sprawdzone w przegladarce: 1000 x 1000 / 30 st., 2000 x 800 / 60 st. wewnetrzny, 2000 x 1500 / 15 st.; klik sciany 2 przelacza stan, Wszystkie / Brak; `npm test` 192/192.
+
 ### Daszki jako sciety ostroslup, Ksiazka z obrazkiem z HMI
 - Daszki: jeden rysunek SVG - sciety ostroslup w widoku z gory ze scianami pod 45 st. (gorna plaszczyzna odsunieta rowno z kazdej strony), numery scian 1-4 jak w HMI (1 dol, 2 prawa, 3 gora, 4 lewa). Sciana zaznaczona do wykonania (`bRoof1..4Wall`) - zielona, pominieta - przerywany obrys. Zamiast 8 obrazkow scian.
 - Ksiazka: wrocone obrazki z HMI (`book_0.png`, `book_1.png`).
