@@ -10,7 +10,7 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 - Serwer VizuApp na komputerze maszyny jest posrednikiem OPC UA dla telefonu (przegladarka nie laczy sie z OPC UA sama). `config.json`: `"httpHost": "0.0.0.0"`.
 - `install-phone.ps1` (paczka `dist\VizuApp\`): na maszynie raz jako administrator - httpHost, regula zapory na port 8128, autostart serwera po zalogowaniu do Windows (`vizu.ps1 -ServerOnly`), adresy dla telefonu.
 - Aplikacja na telefonie (PWA): `manifest.webmanifest`, ikony 192 / 512 / maskable, `sw.js` (zawsze z sieci, strona z pamieci tylko bez serwera), przycisk „Zainstaluj aplikacje”, gdy przegladarka pozwala.
-- Okno „Polaczenie” (dla kazdego): **PLC w sieci** - serwer szuka serwerow OPC UA (port 4840, Hello / ACK, nazwa z GetEndpoints) w podsieciach swoich kart (`src/server/plcscan.js`, `GET /api/connection/scan`, Serwis / Admin), klik laczy; **Maszyny z VizuApp** - telefon sprawdza `/api/hello` (CORS) w podsieci /24 strony, klik otwiera maszyne.
+- Okno „Polaczenie” (dla kazdego): **PLC w sieci** - serwer szuka serwerow OPC UA (port 4840, Hello / ACK, nazwa z GetEndpoints) w podsieciach swoich kart (`src/server/plcscan.js`, `GET /api/connection/scan`, Serwis / Admin), klik laczy; **Maszyny z VizuApp** - serwer sprawdza `/api/hello` w podsieciach swoich kart (`GET /api/hosts`; przegladarka blokuje stronie zapytania do innych adresow), klik otwiera maszyne.
 - Baner blokady (`lockInfo`) na waskim ekranie nie rozjezdza sie w kolumny.
 - Sprawdzone: skan z laptopa znajduje PLC 192.168.1.254 (`OPCUAServer@X82PCB1P2224006`) w ok. 5 s i zaznacza biezacy; widok telefonu (375x812) z adresu IP - lista maszyn z VizuApp; `npm test` 197/197.
 

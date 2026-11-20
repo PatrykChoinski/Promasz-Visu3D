@@ -3,8 +3,8 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { startFakePlc } from './fake-plc-server.js';
-import { scanHosts, probeOpcUa, scanOpcUa } from '../src/server/plcscan.js';
-import { loadConfig, createServer } from '../src/server/main.js';
+import { scanHosts, probeOpcUa, scanOpcUa, scanVizu } from '../src/server/plcscan.js';
+import { loadConfig, createServer, pickHosts } from '../src/server/main.js';
 
 const PORT = 48491;
 let plc;
@@ -52,7 +52,21 @@ test('/api/hello z CORS (telefon szuka maszyn), /api/connection/scan tylko dla S
     assert.equal(h.app, 'VizuApp');
     assert.equal(h.endpoint, 'opc.tcp://localhost:4840');
     assert.equal((await fetch(`${base}/api/connection/scan`)).status, 403);
+    // maszyny z VizuApp szuka serwer (strona pyta tylko swoj serwer)
+    const vz = await scanVizu({ hosts: ['127.0.0.1'], port: server.address().port });
+    assert.equal(vz.length, 1);
+    assert.equal(vz[0].endpoint, 'opc.tcp://localhost:4840');
+    assert.equal(vz[0].url, `http://127.0.0.1:${server.address().port}/`);
     const m = await fetch(`${base}/manifest.webmanifest`);
     if (m.ok) assert.match(m.headers.get('content-type'), /manifest\+json/);
   } finally { server.close(); }
+});
+
+test('maszyna z kilkoma kartami - jeden wpis, adres z podsieci telefonu', () => {
+  const found = [
+    { host: '10.12.0.14', name: 'A' }, { host: '192.168.1.111', name: 'A' },
+    { host: '172.21.62.39', name: 'B' }, { host: '192.168.1.254', name: 'B' },
+  ];
+  assert.deepEqual(pickHosts(found, '::ffff:192.168.1.254').map((h) => h.host), ['192.168.1.111', '192.168.1.254']);
+  assert.deepEqual(pickHosts(found, '10.12.0.14').map((h) => h.host), ['10.12.0.14', '172.21.62.39']);
 });

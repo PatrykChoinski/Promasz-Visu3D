@@ -15,6 +15,7 @@
 // GET /api/variables zmienne PLC: nazwa, wezel OPC UA, typ, ostatnia wartosc (diagnostyka podpiecia)
 // GET /api/connection  adres PLC (OPC UA), domyslny adres, adresy strony w sieci (#148)
 // GET /api/connection/scan - serwery OPC UA (sterowniki) w podsieciach tego komputera (plcscan.js; Serwis / Admin)
+// GET /api/hosts     maszyny z VizuApp w podsieciach tego komputera (szuka serwer; wynik pamietany 20 s)
 // GET /api/hello     VizuApp na tym adresie (CORS: telefon szuka maszyn w sieci): nazwa komputera, adres PLC
 // POST /api/connection {endpoint} - nowy adres PLC: zapis w connection.json i laczenie od razu (Serwis / Admin;
 //                    bez logowania - tylko z tego komputera)
@@ -33,7 +34,7 @@ import { OpcUaSource } from './opcua-source.js';
 import { Auth, USERS_FILE, loadUsers, bearer } from './auth.js';
 import { PlcControl, loadHmiWrites } from './plcwrite.js';
 import { AlarmDb, ALARMS_DB } from './alarmdb.js';
-import { scanOpcUa } from './plcscan.js';
+import { scanOpcUa, scanVizu } from './plcscan.js';
 import { activeFromValues } from '../shared/alarms.js';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -161,6 +162,32 @@ async function handleScan(cfg, auth, req, res) {
   }
 }
 
+let hostsScan = null;
+let hostsCache = null;
+// jedna pozycja na maszyne (kilka kart sieciowych): adres z podsieci, przez ktora przyszlo zapytanie (telefon)
+export function pickHosts(found, localAddress) {
+  const local = String(localAddress || '').replace(/^::ffff:/, '');
+  const net24 = (ip) => ip.split('.').slice(0, 3).join('.');
+  const byName = new Map();
+  for (const h of found) {
+    const prev = byName.get(h.name);
+    if (!prev || (net24(h.host) === net24(local) && net24(prev.host) !== net24(local))) byName.set(h.name, h);
+  }
+  return [...byName.values()];
+}
+
+async function handleHosts(cfg, req, res) {
+  try {
+    if (!hostsCache || Date.now() - hostsCache.at > 20000) {
+      hostsScan ??= scanVizu({ port: cfg.httpPort }).finally(() => { hostsScan = null; });
+      hostsCache = { at: Date.now(), found: await hostsScan };
+    }
+    return json(res, 200, { found: pickHosts(hostsCache.found, req.socket.localAddress) });
+  } catch (err) {
+    return json(res, 500, { error: err.message || String(err) });
+  }
+}
+
 async function handleConnection(cfg, source, auth, req, res) {
   const info = () => ({
     endpoint: cfg.endpoint, defaultEndpoint: cfg.defaultEndpoint, plc: Boolean(source),
@@ -253,6 +280,8 @@ export function createServer(cfg, source, auth = null, hmiWrites = null, alarmDb
     } else if (url.pathname === '/api/hello') {
       res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' });
       res.end(JSON.stringify({ app: 'VizuApp', name: os.hostname(), endpoint: cfg.endpoint, connected: Boolean(source?.connected) }));
+    } else if (url.pathname === '/api/hosts') {
+      handleHosts(cfg, req, res);
     } else if (url.pathname === '/api/connection/scan') {
       handleScan(cfg, auth, req, res);
     } else if (url.pathname === '/api/connection') {

@@ -253,9 +253,10 @@ potwierdza wpisy w bazie (po zalogowaniu).
   - **PLC w sieci** (Serwis / Admin): serwer VizuApp szuka serwerów OPC UA
     (port 4840, komunikat Hello) w podsieciach swoich kart sieciowych i podaje
     nazwę serwera; kliknięcie łączy z wybranym PLC. `GET /api/connection/scan`.
-  - **Maszyny z VizuApp:** telefon sprawdza `/api/hello` w podsieci adresu,
-    z którego otwarto stronę (np. 192.168.1.1–254) i pokazuje maszyny
-    z VizuApp; kliknięcie otwiera wybraną maszynę.
+  - **Maszyny z VizuApp:** serwer VizuApp sprawdza `/api/hello` (port
+    8128) w podsieciach swoich kart i podaje listę (`GET /api/hosts`, wynik
+    pamiętany 20 s); kliknięcie otwiera wybraną maszynę. Szuka serwer, bo
+    przeglądarki blokują stronie zapytania do innych adresów w sieci.
 - **Układ ekranu:** Full HD i tablet poziomo (1024×768, 1280×800) – menu po
   lewej, widok 3D, panel po prawej; tablet pionowo (768×1024, 800×1280) – menu
   u góry, widok 3D i panel jeden pod drugim, cała strona na ekranie (bez

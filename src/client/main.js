@@ -742,46 +742,23 @@ async function scanPlc() {
   markFound();
 }
 
-// maszyny z VizuApp w sieci (telefon: inna maszyna albo nowy adres) - /api/hello w podsieci /24 tej strony
+// maszyny z VizuApp w sieci (telefon: inna maszyna) - szuka serwer tej strony (/api/hosts)
 async function scanHosts() {
   const box = $('#hostFound');
-  const here = location.hostname;
-  const port = location.port || '80';
-  const m = /^(\d+\.\d+\.\d+)\.(\d+)$/.exec(here);
-  if (!m || here.startsWith('127.')) {
-    box.innerHTML = '<p class="hint">Strona otwarta lokalnie – maszyny w sieci szuka telefon (strona z adresu IP maszyny).</p>';
-    return;
-  }
   box.innerHTML = '<p class="hint">Szukanie maszyn w sieci…</p>';
   $('#hostScan').disabled = true;
-  const ips = [here, ...Array.from({ length: 254 }, (_, i) => `${m[1]}.${i + 1}`).filter((ip) => ip !== here)];
-  const found = [];
-  let i = 0;
-  const probe = async () => {
-    while (i < ips.length) {
-      const ip = ips[i++];
-      const ctl = new AbortController();
-      const t = setTimeout(() => ctl.abort(), 1500);
-      try {
-        const r = await fetch(`http://${ip}:${port}/api/hello`, { signal: ctl.signal, cache: 'no-store' });
-        const h = await r.json();
-        if (h.app === 'VizuApp') found.push({ ip, ...h });
-      } catch { /* brak VizuApp */ }
-      clearTimeout(t);
-    }
-  };
-  await Promise.all(Array.from({ length: 32 }, probe));
+  const r = await fetch('api/hosts', { cache: 'no-store' }).catch(() => null);
   $('#hostScan').disabled = false;
+  const body = r ? await r.json().catch(() => ({})) : {};
   box.innerHTML = '';
-  found.sort((a, b) => Number(a.ip.split('.')[3]) - Number(b.ip.split('.')[3]));
-  for (const h of found) {
-    const cur = h.ip === here;
-    const b = pickButton(`${h.name} – ${h.ip}${cur ? ' (otwarta)' : ''}`, `PLC ${h.endpoint}${h.connected ? '' : ' – brak połączenia'}`,
-      () => { if (!cur) location.href = `http://${h.ip}:${port}/`; });
-    b.classList.toggle('cur', cur);
+  if (!r?.ok) { box.innerHTML = `<p class="hint">${escHtml(body.error || 'Brak połączenia z serwerem VizuApp')}</p>`; return; }
+  for (const h of body.found) {
+    const b = pickButton(`${h.name} – ${h.host}${h.self ? ' (ta maszyna)' : ''}`, `PLC ${h.endpoint}${h.connected ? '' : ' – brak połączenia'}`,
+      () => { if (!h.self) location.href = h.url; });
+    b.classList.toggle('cur', h.self);
     box.append(b);
   }
-  if (!found.length) box.innerHTML = '<p class="hint">Nie znaleziono maszyn z VizuApp w tej sieci.</p>';
+  if (!body.found.length) box.innerHTML = '<p class="hint">Nie znaleziono maszyn z VizuApp w tej sieci.</p>';
 }
 
 // instalacja jako aplikacja (PWA): przycisk, gdy przegladarka pozwala; iPhone - Udostepnij > Do ekranu poczatkowego

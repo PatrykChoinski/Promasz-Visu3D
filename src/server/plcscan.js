@@ -73,6 +73,32 @@ async function serverName(endpoint, timeout = 4000) {
   }
 }
 
+// VizuApp pod adresem (GET /api/hello) albo null
+async function vizuHello(host, port, timeout) {
+  try {
+    const r = await fetch(`http://${host}:${port}/api/hello`, { signal: AbortSignal.timeout(timeout) });
+    const h = await r.json();
+    return h?.app === 'VizuApp' ? h : null;
+  } catch { return null; }
+}
+
+// [{host, url, name, endpoint, connected, self}] - maszyny z VizuApp w sieci (szuka serwer: strona telefonu nie musi
+// laczyc sie z innymi adresami - przegladarki to blokuja); self - ten serwer
+export async function scanVizu({ hosts = scanHosts().filter((h) => h !== '127.0.0.1'), port = 8128, timeout = 800, parallel = 128 } = {}) {
+  const own = new Set(Object.values(os.networkInterfaces()).flat().filter((n) => n?.family === 'IPv4').map((n) => n.address));
+  const found = [];
+  let i = 0;
+  const worker = async () => {
+    while (i < hosts.length) {
+      const h = hosts[i++];
+      const hello = await vizuHello(h, port, timeout);
+      if (hello) found.push({ host: h, url: `http://${h}:${port}/`, name: hello.name, endpoint: hello.endpoint, connected: hello.connected, self: own.has(h) });
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(parallel, hosts.length) }, worker));
+  return found.sort((a, b) => toInt(a.host) - toInt(b.host));
+}
+
 // [{endpoint, host, name, local}] - serwery OPC UA w sieci; local - na tym komputerze
 export async function scanOpcUa({ hosts = scanHosts(), port = PORT, timeout = 600, parallel = 128 } = {}) {
   const found = [];
