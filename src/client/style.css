@@ -233,9 +233,10 @@ label.cb .lt { display: inline-flex; }
 .noaccess { display: none !important; }
 
 /* #144 bez bazowania / bez logowania: ruchy i ustawienia zablokowane */
-.lockInfo { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 10px; padding: 8px 12px; border: 1px solid #f5c2bd;
+.lockInfo { display: block; position: relative; margin: 0 0 10px; padding: 8px 12px 8px 38px; border: 1px solid #f5c2bd;
   border-radius: var(--radius); background: #fdecea; color: var(--bad); font-size: 13px; }
-.lockInfo::before { content: ''; flex: none; width: 18px; height: 18px; margin-top: 1px; background: currentColor;
+.lockInfo[hidden] { display: none; }
+.lockInfo::before { content: ''; position: absolute; left: 12px; top: 9px; width: 18px; height: 18px; background: currentColor;
   -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>') center / contain no-repeat;
   mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>') center / contain no-repeat; }
 [data-lock].locked { opacity: 0.45; filter: grayscale(0.4); }
@@ -538,3 +539,13 @@ button.svcGoto:disabled { background: var(--raised); }
 .roofBtns { display: flex; gap: 8px; justify-content: center; margin-top: 6px; }
 .roofBtns button { min-height: 36px; min-width: 110px; border-radius: 999px; }
 .figPic [data-wall]:hover polygon { stroke: var(--accent); }
+
+/* okno Polaczenie: PLC i maszyny z VizuApp znalezione w sieci (do wyboru) */
+.pickHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 4px; font-weight: 600; }
+.pickHead button { min-height: 32px; padding: 2px 10px; }
+.pickList { display: flex; flex-direction: column; gap: 4px; }
+.pickList button { display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: 6px 10px; gap: 1px; }
+.pickList button small { color: var(--muted); font-weight: 400; }
+.pickList button.cur { outline: 2px solid var(--accent); }
+.pickList .hint { margin: 2px 0; }
+.win.modal { max-width: calc(100vw - 16px); max-height: calc(100vh - 100px); overflow-y: auto; }

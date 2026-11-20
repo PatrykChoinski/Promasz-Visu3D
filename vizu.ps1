@@ -1,5 +1,6 @@
 # Uruchamiane z PLC (HMIScreen, jak D:\Calc\calc.ps1): serwer VizuApp (node.exe w tle) i strona w przegladarce;
-# gdy strona juz jest otwarta - tylko okno na wierzch
+# gdy strona juz jest otwarta - tylko okno na wierzch. -ServerOnly: sam serwer (autostart dla telefonu, install-phone.ps1)
+param([switch]$ServerOnly)
 $port = 8128
 $cfgFile = Join-Path $PSScriptRoot 'config.json'
 if (Test-Path $cfgFile) {
@@ -17,6 +18,8 @@ if (-not (Test-VizuServer)) {
         -WorkingDirectory $PSScriptRoot -WindowStyle Hidden
     for ($i = 0; $i -lt 50 -and -not (Test-VizuServer); $i++) { Start-Sleep -Milliseconds 200 }
 }
+
+if ($ServerOnly) { exit }
 
 $w = New-Object -ComObject WScript.Shell
 $w.SendKeys('%')

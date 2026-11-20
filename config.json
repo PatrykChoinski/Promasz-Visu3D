@@ -1,5 +1,6 @@
 {
   "httpPort": 8128,
+  "httpHost": "0.0.0.0",
   "endpoint": "opc.tcp://localhost:4840",
   "username": "",
   "password": "",

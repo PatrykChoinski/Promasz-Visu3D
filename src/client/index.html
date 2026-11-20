@@ -2,7 +2,14 @@
 <html lang="pl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a1f33">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="VizuApp">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="img/icon-192.png">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
   <title>VizuApp</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -13,7 +20,7 @@
       <button data-mode="online" title="Online – pozycje i stany z PLC (OPC UA)"><svg class="ic" aria-hidden="true"><use href="#i-plc"/></svg><span class="lbl">PLC</span></button>
       <button data-mode="offline" title="Offline – symulacja bez PLC"><svg class="ic" aria-hidden="true"><use href="#i-sim"/></svg><span class="lbl">SIM</span></button>
     </div>
-    <button id="connOpen" class="tool" title="Połączenie z PLC – adres OPC UA (np. tablet)" hidden><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg></button>
+    <button id="connOpen" class="tool" title="Połączenie – PLC i maszyny w sieci, instalacja na telefonie"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg></button>
     <!-- #155 alarmy jak w HMI: liczba aktywnych, okno z lista -->
     <button id="alarmOpen" class="tool" title="Alarmy"><svg class="ic" aria-hidden="true"><use href="#i-warn"/></svg><span class="alarmCount" id="alarmCount" hidden></span></button>
     <button id="manOpen" class="tool" title="Ruchy ręczne – okno, które można przesuwać i zamknąć"><svg class="ic" aria-hidden="true"><use href="#i-hand"/></svg></button>
@@ -373,16 +380,25 @@
   </div>
 
   <!-- #148 polaczenie z PLC: adres serwera OPC UA (domyslnie localhost na maszynie; tablet - adres sterownika) -->
-  <div id="connWin" class="win modal" hidden role="dialog" aria-label="Połączenie z PLC">
-    <div class="winHead"><span><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg>Połączenie z PLC</span><button id="connClose" title="Zamknij"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
-    <form class="winBody" id="connForm">
-      <label title="Adres serwera OPC UA sterownika">Adres PLC (OPC UA)
-        <input type="text" id="connEndpoint" inputmode="url" autocomplete="off" spellcheck="false" placeholder="opc.tcp://192.168.1.10:4840"></label>
-      <p class="hint" id="connStatus"></p>
-      <p class="hint" id="connErr"></p>
-      <div class="row"><button type="submit" class="primary" id="connSave" title="Połącz z tym adresem (zapisany na serwerze VizuApp)"><svg class="ic" aria-hidden="true"><use href="#i-plc"/></svg><span>Połącz</span></button><button type="button" id="connDefault" title="Adres domyślny"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg><span>Domyślny</span></button></div>
+  <div id="connWin" class="win modal" hidden role="dialog" aria-label="Połączenie">
+    <div class="winHead"><span><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg>Połączenie</span><button id="connClose" title="Zamknij"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <div class="winBody">
+      <form id="connForm">
+        <div id="connPlcBox">
+          <label title="Adres serwera OPC UA sterownika">Adres PLC (OPC UA)
+            <input type="text" id="connEndpoint" inputmode="url" autocomplete="off" spellcheck="false" placeholder="opc.tcp://192.168.1.10:4840"></label>
+          <div class="pickHead"><span>PLC w sieci</span><button type="button" id="connScan" title="Szukaj sterowników (OPC UA) w sieci"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg><span>Szukaj</span></button></div>
+          <div class="pickList" id="connFound"></div>
+          <div class="row"><button type="submit" class="primary" id="connSave" title="Połącz z tym adresem (zapisany na serwerze VizuApp)"><svg class="ic" aria-hidden="true"><use href="#i-plc"/></svg><span>Połącz</span></button><button type="button" id="connDefault" title="Adres domyślny"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg><span>Domyślny</span></button></div>
+        </div>
+        <p class="hint" id="connStatus"></p>
+        <p class="hint" id="connErr"></p>
+      </form>
+      <div class="pickHead"><span>Maszyny z VizuApp</span><button type="button" id="hostScan" title="Szukaj maszyn z VizuApp w sieci (telefon / tablet)"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg><span>Szukaj</span></button></div>
+      <div class="pickList" id="hostFound"></div>
       <p class="hint" id="connUrls"></p>
-    </form>
+      <div class="row" id="installRow" hidden><button type="button" class="primary" id="installBtn" title="Zainstaluj VizuApp jako aplikację"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Zainstaluj aplikację</span></button></div>
+    </div>
   </div>
 
   <footer>

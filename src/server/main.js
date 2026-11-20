@@ -14,6 +14,8 @@
 // POST /api/login, POST /api/logout, GET /api/session - logowanie (#145, auth.js; uzytkownicy z users.json)
 // GET /api/variables zmienne PLC: nazwa, wezel OPC UA, typ, ostatnia wartosc (diagnostyka podpiecia)
 // GET /api/connection  adres PLC (OPC UA), domyslny adres, adresy strony w sieci (#148)
+// GET /api/connection/scan - serwery OPC UA (sterowniki) w podsieciach tego komputera (plcscan.js; Serwis / Admin)
+// GET /api/hello     VizuApp na tym adresie (CORS: telefon szuka maszyn w sieci): nazwa komputera, adres PLC
 // POST /api/connection {endpoint} - nowy adres PLC: zapis w connection.json i laczenie od razu (Serwis / Admin;
 //                    bez logowania - tylko z tego komputera)
 // GET /api/alarms, POST /api/alarms/ack - historia alarmow PLC w SQLite (alarms.db obok config.json, alarmdb.js)
@@ -31,12 +33,13 @@ import { OpcUaSource } from './opcua-source.js';
 import { Auth, USERS_FILE, loadUsers, bearer } from './auth.js';
 import { PlcControl, loadHmiWrites } from './plcwrite.js';
 import { AlarmDb, ALARMS_DB } from './alarmdb.js';
+import { scanOpcUa } from './plcscan.js';
 import { activeFromValues } from '../shared/alarms.js';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PUBLIC_DIR = path.join(APP_DIR, 'public');
 export const CONNECTION_FILE = 'connection.json';
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
+const TYPES = { '.webmanifest': 'application/manifest+json', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
 
 export function loadConfig(file) {
   const candidates = file ? [file] : [path.join(process.cwd(), 'config.json'), path.join(APP_DIR, 'config.json')];
@@ -140,6 +143,24 @@ async function handlePlc(control, source, auth, req, res, pathname) {
   }
 }
 
+// zmiana adresu PLC i szukanie sterownikow: Serwis / Admin; bez logowania (brak users.json) - tylko z tego komputera
+function connDenied(auth, req) {
+  if (auth?.enabled ? (auth.session(bearer(req))?.level ?? 0) >= 2 : isLocal(req)) return null;
+  return auth?.enabled ? 'Zmiana adresu PLC – zaloguj jako Serwis albo Admin' : 'Zmiana adresu PLC tylko na komputerze z VizuApp';
+}
+
+let scanning = null;
+async function handleScan(cfg, auth, req, res) {
+  const denied = connDenied(auth, req);
+  if (denied) return json(res, 403, { error: denied });
+  scanning ??= scanOpcUa().finally(() => { scanning = null; });
+  try {
+    return json(res, 200, { endpoint: cfg.endpoint, found: await scanning });
+  } catch (err) {
+    return json(res, 500, { error: err.message || String(err) });
+  }
+}
+
 async function handleConnection(cfg, source, auth, req, res) {
   const info = () => ({
     endpoint: cfg.endpoint, defaultEndpoint: cfg.defaultEndpoint, plc: Boolean(source),
@@ -148,10 +169,8 @@ async function handleConnection(cfg, source, auth, req, res) {
   });
   if (req.method === 'GET') return json(res, 200, info());
   if (req.method !== 'POST') return json(res, 405, { error: 'Metoda niedozwolona' });
-  // zmiana adresu: Serwis / Admin; bez logowania (brak users.json) - tylko z tego komputera
-  if (auth?.enabled ? (auth.session(bearer(req))?.level ?? 0) < 2 : !isLocal(req)) {
-    return json(res, 403, { error: auth?.enabled ? 'Zmiana adresu PLC – zaloguj jako Serwis albo Admin' : 'Zmiana adresu PLC tylko na komputerze z VizuApp' });
-  }
+  const denied = connDenied(auth, req);
+  if (denied) return json(res, 403, { error: denied });
   if (!source) return json(res, 409, { error: 'Serwer uruchomiony bez PLC (--no-plc)' });
   const { endpoint } = await readJson(req);
   const want = endpoint === '' || endpoint === null ? cfg.defaultEndpoint : endpoint;
@@ -231,6 +250,11 @@ export function createServer(cfg, source, auth = null, hmiWrites = null, alarmDb
     } else if (url.pathname === '/api/variables') {
       json(res, 200, { connected: Boolean(source?.connected), status: source ? source.status : 'Bez PLC (--no-plc)',
         variables: source ? source.variablesReport() : [] });
+    } else if (url.pathname === '/api/hello') {
+      res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' });
+      res.end(JSON.stringify({ app: 'VizuApp', name: os.hostname(), endpoint: cfg.endpoint, connected: Boolean(source?.connected) }));
+    } else if (url.pathname === '/api/connection/scan') {
+      handleScan(cfg, auth, req, res);
     } else if (url.pathname === '/api/connection') {
       handleConnection(cfg, source, auth, req, res);
     } else if (url.pathname === '/api/plc' || url.pathname.startsWith('/api/plc/')) {

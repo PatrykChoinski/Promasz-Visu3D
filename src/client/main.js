@@ -673,8 +673,9 @@ function connectEvents() {
   };
 }
 
-// --- #148 polaczenie z PLC: adres OPC UA do wpisania (maszyna - localhost, tablet - adres sterownika) ---------
-// Serwer VizuApp zapisuje adres w connection.json i laczy sie od razu; zmiana - Serwis / Admin.
+// --- #148 polaczenie: adres PLC (OPC UA) i maszyny z VizuApp w sieci; instalacja na telefonie (PWA) ---------
+// Serwer VizuApp zapisuje adres PLC w connection.json i laczy sie od razu; zmiana i szukanie PLC - Serwis / Admin.
+// Maszyny z VizuApp szuka strona (telefon): /api/hello w podsieci adresu, z ktorego otwarto strone.
 
 const connAllowed = () => !state.cfg.static && accessLevel() >= 2;
 
@@ -684,23 +685,118 @@ function connInfo(c) {
   $('#connStatus').textContent = c.plc
     ? `Teraz: ${c.endpoint} – ${(state.mode === 'online' && state.online.status) || c.status}`
     : 'Serwer VizuApp uruchomiony bez PLC (--no-plc) – adresu nie można zmienić.';
-  $('#connSave').disabled = $('#connDefault').disabled = !c.plc;
+  $('#connSave').disabled = $('#connDefault').disabled = $('#connScan').disabled = !c.plc;
   if (state.online.connected && $('#connErr').textContent.startsWith('Zapisane')) $('#connErr').textContent = '';
   $('#connUrls').textContent = c.urls.length > 1
-    ? `Strona w sieci (tablet): ${c.urls.slice(1).join(', ')}`
-    : 'Strona tylko na tym komputerze – dla tabletu w sieci serwer VizuApp z --host 0.0.0.0 (README).';
+    ? `Ta strona w sieci (telefon / tablet): ${c.urls.slice(1).join(', ')}`
+    : 'Strona tylko na tym komputerze – dla telefonu w sieci "httpHost": "0.0.0.0" w config.json (README).';
+  markFound();
 }
 
 async function showConn(open) {
   $('#connWin').hidden = !open;
   $('#connErr').textContent = '';
   if (!open) return;
+  $('#connPlcBox').hidden = !connAllowed();
+  if (!$('#hostFound').childElementCount) scanHosts();
+  if (!connAllowed()) { $('#connStatus').textContent = 'Adres PLC zmienia Serwis albo Admin (zaloguj się).'; return; }
   const r = await fetch('api/connection', { headers: authHeaders() }).catch(() => null);
   if (!r?.ok) { $('#connErr').textContent = 'Brak połączenia z serwerem VizuApp'; return; }
   const c = await r.json();
   connInfo(c);
   $('#connEndpoint').value = c.endpoint;
-  $('#connEndpoint').focus();
+  if (c.plc && !$('#connFound').childElementCount) scanPlc();
+}
+
+function pickButton(title, sub, onClick) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.innerHTML = `<span>${escHtml(title)}</span>${sub ? `<small>${escHtml(sub)}</small>` : ''}`;
+  b.onclick = onClick;
+  return b;
+}
+
+function markFound() {
+  for (const b of $$('#connFound button')) b.classList.toggle('cur', b.dataset.ep === state.conn?.endpoint);
+}
+
+// sterowniki (serwery OPC UA) w sieci maszyny - szuka serwer VizuApp
+async function scanPlc() {
+  const box = $('#connFound');
+  box.innerHTML = '<p class="hint">Szukanie PLC w sieci…</p>';
+  $('#connScan').disabled = true;
+  const r = await fetch('api/connection/scan', { headers: authHeaders() }).catch(() => null);
+  $('#connScan').disabled = false;
+  const body = r ? await r.json().catch(() => ({})) : {};
+  box.innerHTML = '';
+  if (!r?.ok) { box.innerHTML = `<p class="hint">${escHtml(body.error || 'Brak połączenia z serwerem VizuApp')}</p>`; return; }
+  if (!body.found.length) { box.innerHTML = '<p class="hint">Nie znaleziono PLC (OPC UA, port 4840) – wpisz adres ręcznie.</p>'; return; }
+  for (const f of body.found) {
+    const b = pickButton(f.local ? `${f.endpoint} (ten komputer)` : f.endpoint, f.name, () => {
+      $('#connEndpoint').value = f.endpoint;
+      saveConn(f.endpoint);
+    });
+    b.dataset.ep = f.endpoint;
+    box.append(b);
+  }
+  markFound();
+}
+
+// maszyny z VizuApp w sieci (telefon: inna maszyna albo nowy adres) - /api/hello w podsieci /24 tej strony
+async function scanHosts() {
+  const box = $('#hostFound');
+  const here = location.hostname;
+  const port = location.port || '80';
+  const m = /^(\d+\.\d+\.\d+)\.(\d+)$/.exec(here);
+  if (!m || here.startsWith('127.')) {
+    box.innerHTML = '<p class="hint">Strona otwarta lokalnie – maszyny w sieci szuka telefon (strona z adresu IP maszyny).</p>';
+    return;
+  }
+  box.innerHTML = '<p class="hint">Szukanie maszyn w sieci…</p>';
+  $('#hostScan').disabled = true;
+  const ips = [here, ...Array.from({ length: 254 }, (_, i) => `${m[1]}.${i + 1}`).filter((ip) => ip !== here)];
+  const found = [];
+  let i = 0;
+  const probe = async () => {
+    while (i < ips.length) {
+      const ip = ips[i++];
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 1500);
+      try {
+        const r = await fetch(`http://${ip}:${port}/api/hello`, { signal: ctl.signal, cache: 'no-store' });
+        const h = await r.json();
+        if (h.app === 'VizuApp') found.push({ ip, ...h });
+      } catch { /* brak VizuApp */ }
+      clearTimeout(t);
+    }
+  };
+  await Promise.all(Array.from({ length: 32 }, probe));
+  $('#hostScan').disabled = false;
+  box.innerHTML = '';
+  found.sort((a, b) => Number(a.ip.split('.')[3]) - Number(b.ip.split('.')[3]));
+  for (const h of found) {
+    const cur = h.ip === here;
+    const b = pickButton(`${h.name} – ${h.ip}${cur ? ' (otwarta)' : ''}`, `PLC ${h.endpoint}${h.connected ? '' : ' – brak połączenia'}`,
+      () => { if (!cur) location.href = `http://${h.ip}:${port}/`; });
+    b.classList.toggle('cur', cur);
+    box.append(b);
+  }
+  if (!found.length) box.innerHTML = '<p class="hint">Nie znaleziono maszyn z VizuApp w tej sieci.</p>';
+}
+
+// instalacja jako aplikacja (PWA): przycisk, gdy przegladarka pozwala; iPhone - Udostepnij > Do ekranu poczatkowego
+let installEvt = null;
+function bindInstall() {
+  if ('serviceWorker' in navigator && window.isSecureContext) navigator.serviceWorker.register('sw.js').catch(() => {});
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; $('#installRow').hidden = false; });
+  window.addEventListener('appinstalled', () => { installEvt = null; $('#installRow').hidden = true; });
+  $('#installBtn').onclick = async () => {
+    if (!installEvt) return;
+    installEvt.prompt();
+    await installEvt.userChoice.catch(() => null);
+    installEvt = null;
+    $('#installRow').hidden = true;
+  };
 }
 
 async function saveConn(endpoint) {
@@ -721,6 +817,9 @@ function bindConn() {
   $('#connClose').onclick = () => showConn(false);
   $('#connForm').onsubmit = (e) => { e.preventDefault(); saveConn($('#connEndpoint').value.trim()); };
   $('#connDefault').onclick = () => saveConn('');
+  $('#connScan').onclick = () => scanPlc();
+  $('#hostScan').onclick = () => scanHosts();
+  bindInstall();
 }
 
 // --- tryb offline: formularze ----------------------------------------------------
@@ -2002,9 +2101,10 @@ function authChanged() {
   refreshPlcAccess();
   // opisy zmiennych PLC (nazwy, podpowiedzi) tylko dla Admina
   setPlcNamesAdmin(accessLevel() >= 3);
-  // polaczenie z PLC (#148): Serwis / Admin, nie w wersji statycznej
-  $('#connOpen').hidden = !connAllowed();
-  if (!connAllowed()) $('#connWin').hidden = true;
+  // polaczenie (#148): okno dla kazdego (maszyny w sieci, instalacja); adres PLC - Serwis / Admin; nie w wersji statycznej
+  $('#connOpen').hidden = Boolean(state.cfg.static);
+  $('#connPlcBox').hidden = !connAllowed();
+  if (!$('#connWin').hidden) showConn(true);
   // logowanie zawsze widoczne; bez users.json - informacja, jak zalozyc uzytkownikow
   $('#authBox').hidden = false;
   $('#authUser').innerHTML = a.user ? `<b>${a.user}</b>` : a.enabled ? 'Niezalogowany' : 'Logowanie wyłączone';

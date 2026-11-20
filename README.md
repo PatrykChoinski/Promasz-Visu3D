@@ -74,6 +74,7 @@ Budowa: serwer **Node.js** (`node-opcua-client`, SSE do strony) i strona
 | `config.json` | ustawienia (adres OPC UA, port strony, wartości początkowe offline) |
 | `vizu.ps1` | uruchamianie z PLC (jak `D:\Calc\calc.ps1`) |
 | `build.ps1` | testy i paczka `dist\VizuApp\` na maszynę |
+| `install-phone.ps1` | na maszynie: strona w sieci dla telefonu, zapora, autostart serwera |
 
 ## Uruchamianie na maszynie
 
@@ -214,8 +215,9 @@ potwierdza wpisy w bazie (po zalogowaniu).
 ### Full HD na maszynie, tablet z adresem PLC (#148)
 
 - **Domyślnie (maszyna):** ekran Full HD (1920×1080), serwer VizuApp na
-  komputerze panelu, strona tylko lokalnie (`http://127.0.0.1:8128/`), PLC
-  przez OPC UA na `opc.tcp://localhost:4840`. Nic nie trzeba ustawiać.
+  komputerze panelu, PLC przez OPC UA na `opc.tcp://localhost:4840`. Panel
+  otwiera `http://127.0.0.1:8128/`; `config.json` z repo ma
+  `"httpHost": "0.0.0.0"`, więc strona jest też w sieci maszyny (telefon).
 - **Okno „Połączenie z PLC”** (przycisk z błyskawicą w górnym pasku, Serwis
   i Admin; bez `users.json` – każdy, ale zmiana tylko na komputerze z serwerem):
   adres serwera OPC UA sterownika do wpisania, np. `opc.tcp://192.168.1.10:4840`.
@@ -232,6 +234,28 @@ potwierdza wpisy w bazie (po zalogowaniu).
   Na tablecie `http://<IP komputera>:8128/` (adresy podaje okno „Połączenie
   z PLC” i konsola serwera). Adres PLC – jak wyżej. Wtedy warto mieć
   `users.json` (zmiana adresu i ekrany serwisowe tylko po zalogowaniu).
+- **Telefon bez laptopa (maszyna + telefon w jednej sieci Wi-Fi):**
+  przeglądarka telefonu nie łączy się z OPC UA sama (nie ma połączeń TCP),
+  więc pośrednikiem jest serwer VizuApp na komputerze maszyny – ten sam, który
+  obsługuje panel. Na maszynie raz, jako administrator:
+  `powershell -nop -ep bypass -File D:\VizuApp\install-phone.ps1`. Skrypt
+  ustawia `"httpHost": "0.0.0.0"`, otwiera port 8128 w zaporze, dodaje
+  autostart serwera po zalogowaniu do Windows (`vizu.ps1 -ServerOnly`, bez
+  przycisku w HMI) i wypisuje adresy dla telefonu.
+  Na telefonie `http://<IP maszyny>:8128/`, logowanie Operator / Serwis / Admin.
+- **Aplikacja na telefonie:** strona ma manifest i ikonę. Android (Chrome):
+  menu ⋮ → „Dodaj do ekranu głównego”. Pełna instalacja (bez paska adresu,
+  przycisk „Zainstaluj aplikację” w oknie Połączenie) wymaga bezpiecznego
+  adresu – na telefonie w `chrome://flags` opcja „Insecure origins treated as
+  secure” z adresem `http://<IP maszyny>:8128`. iPhone (Safari): Udostępnij →
+  „Do ekranu początkowego”.
+- **Okno „Połączenie”** (błyskawica, dla każdego):
+  - **PLC w sieci** (Serwis / Admin): serwer VizuApp szuka serwerów OPC UA
+    (port 4840, komunikat Hello) w podsieciach swoich kart sieciowych i podaje
+    nazwę serwera; kliknięcie łączy z wybranym PLC. `GET /api/connection/scan`.
+  - **Maszyny z VizuApp:** telefon sprawdza `/api/hello` w podsieci adresu,
+    z którego otwarto stronę (np. 192.168.1.1–254) i pokazuje maszyny
+    z VizuApp; kliknięcie otwiera wybraną maszynę.
 - **Układ ekranu:** Full HD i tablet poziomo (1024×768, 1280×800) – menu po
   lewej, widok 3D, panel po prawej; tablet pionowo (768×1024, 800×1280) – menu
   u góry, widok 3D i panel jeden pod drugim, cała strona na ekranie (bez
