@@ -6,6 +6,11 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-23
 
+### Android: logowanie z hasłem w symulatorze (v1.0.6)
+- Symulator w APK pyta o hasło jak maszyna (Operator / Serwis / Admin). Skróty scrypt z `users.json` maszyny są w sekrecie GitHuba `SIM_USERS_JSON`, wstrzykiwane tylko przy budowie wydania (`build-pages.js`); hasło sprawdzane lokalnie (`scrypt-js`). Publiczne GitHub Pages bez zmian (demo bez hasła).
+- Górny pasek na telefonie mieści się na szerokość ekranu (logowanie jako piktogram).
+
+
 ### Telefon: gorny pasek na cala szerokosc
 - Na telefonie logowanie jako sam piktogram (zalogowany - zielony, nazwa w podpowiedzi), mniejsze przyciski i odstepy, tempo symulacji bez ikony - pasek miesci sie bez przewijania (360 px: SIM i PLC ze STOP / PAUZA).
 

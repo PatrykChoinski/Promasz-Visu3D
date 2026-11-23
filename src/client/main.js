@@ -3,6 +3,7 @@
 // ciecie w stol, bazowanie (tryb pila / frez / wiercenie / polerowanie - narzedzie i ekrany wg trybu).
 
 import { View3D } from './view3d.js';
+import { scrypt } from 'scrypt-js';
 import { tableExtent } from './machine3d.js';
 import { MAX_APEX, apexPoints, boardZMin, bounds, isArea, pointInPolygon } from '../shared/area.js';
 import { machine as makeMachine, headFrame, bladeFrame, toolFrame, plcToolAxisZ, workAxisZ, plcActualPosition, axisFromActual, isToolMode, toolSize, penetration, topZ, radius, lineAngle } from '../shared/geometry.js';
@@ -2169,9 +2170,11 @@ async function initAuth() {
   const a = state.auth;
   a.enabled = Boolean(state.cfg.auth?.enabled);
   a.demo = Boolean(state.cfg.auth?.demo);
-  // demo: bez pola hasla, z opisem
-  $('#loginPassRow').hidden = a.demo;
-  $('#loginDemo').hidden = !a.demo;
+  // symulator w aplikacji Android: skroty scrypt hasel maszyny (sekret GitHuba przy budowie wydania) - haslo sprawdzane lokalnie
+  a.hashes = a.demo ? state.cfg.auth?.hashes || null : null;
+  // demo bez skrotow: bez pola hasla, z opisem
+  $('#loginPassRow').hidden = a.demo && !a.hashes;
+  $('#loginDemo').hidden = !a.demo || Boolean(a.hashes);
   a.users = state.cfg.auth?.users || [];
   a.timeoutMin = state.cfg.auth?.timeoutMin ?? 30;
   $('#loginUser').innerHTML = a.users.map((u) => `<option value="${u}">${u}</option>`).join('');
@@ -2192,12 +2195,27 @@ function showLogin(open) {
   $('#loginWin').hidden = !open;
   $('#loginErr').textContent = '';
   $('#loginPass').value = '';
-  if (open) (state.auth.demo ? $('#loginUser') : $('#loginPass')).focus();
+  if (open) (state.auth.demo && !state.auth.hashes ? $('#loginUser') : $('#loginPass')).focus();
+}
+
+// scrypt jak w src/server/auth.js (N 16384, r 8, p 1, 32 bajty)
+async function checkLocalPassword(entry, password) {
+  if (!entry?.salt || !entry?.hash) return false;
+  const enc = new TextEncoder();
+  const got = await scrypt(enc.encode(String(password)), enc.encode(entry.salt), 16384, 8, 1, 32);
+  const hex = Array.from(got, (b) => b.toString(16).padStart(2, '0')).join('');
+  return hex === entry.hash;
 }
 
 async function login(user, password) {
   if (state.auth.demo) {
     if (!DEMO_LEVELS[user]) return;
+    if (state.auth.hashes && !(await checkLocalPassword(state.auth.hashes[user], password))) {
+      await new Promise((r) => setTimeout(r, 500));
+      $('#loginErr').textContent = 'Złe hasło';
+      $('#loginPass').value = '';
+      return;
+    }
     setSession({ user, level: DEMO_LEVELS[user], token: DEMO_PREFIX + user });
     showLogin(false);
     return;

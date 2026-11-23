@@ -53,6 +53,8 @@ jobs:
           node-version: 22
           cache: npm
       - name: Symulator offline (wersja statyczna w assets/sim)
+        env:
+          SIM_USERS_JSON: ${{ secrets.SIM_USERS_JSON }}
         run: |
           npm ci
           node scripts/build-pages.js

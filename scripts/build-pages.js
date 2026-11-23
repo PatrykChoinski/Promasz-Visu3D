@@ -19,6 +19,12 @@ const cfg = { ...clientConfig(loadConfig(path.join(root, 'config.json')), false)
 // logowanie demonstracyjne (#145): bez serwera nie ma czym sprawdzic hasla, a skroty hasel w publicznej stronie
 // dalyby sie zlamac - wybor uzytkownika bez hasla, poziomy (pokazywanie / ukrywanie funkcji) jak na maszynie
 cfg.auth = { enabled: true, demo: true, users: ['Operator', 'Serwis', 'Admin'], timeoutMin: 0 };
+// symulator w APK (workflow Wydanie): SIM_USERS_JSON = users.json maszyny (sekret GitHuba) - hasla jak na maszynie,
+// sprawdzane lokalnie skrotem scrypt; na publicznych Pages zmiennej nie ma, wiec zostaje demo
+if (process.env.SIM_USERS_JSON) {
+  const users = JSON.parse(process.env.SIM_USERS_JSON).users || {};
+  cfg.auth.hashes = Object.fromEntries(Object.entries(users).map(([n, u]) => [n, { salt: u.salt, hash: u.hash }]));
+}
 fs.mkdirSync(path.join(out, 'api'), { recursive: true });
 fs.writeFileSync(path.join(out, 'api', 'config'), JSON.stringify(cfg));
 // bez Jekylla - pliki jak sa
