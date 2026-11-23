@@ -3329,6 +3329,7 @@ function bindUi() {
 
   // telefon: klikniecie ekranu otwiera jego panel na caly ekran, "wstecz" wraca do widoku 3D
   for (const t of $$('.tabs button')) t.onclick = () => { showTab(t.dataset.tab); if (PHONE.matches) document.body.classList.add('panelOpen'); };
+  $('#vtoolsBtn').onclick = () => document.body.classList.toggle('vtoolsOpen');
   panelBack.onclick = () => { document.body.classList.remove('panelOpen'); requestDraw(); };
   for (const el of $$('[data-m], [data-d]')) el.addEventListener('input', offlineFormsChanged);
   $('#showPlan').onchange = requestDraw;

@@ -11,6 +11,7 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 - Okna z gornego paska (Polaczenie, Alarmy, Ruchy reczne, logowanie) na telefonie na caly ekran.
 - Gorny pasek (STOP / PAUZA) zawsze widoczny, jeden przewijany wiersz bez napisow (poza STOP).
 - Komputer / panel maszyny bez zmian (tylko reguly @media dla telefonu).
+- Obrot telefonu: bez automatycznego powiekszania tekstu (`text-size-adjust`), wysokosc `100dvh`; narzedzia widoku i warstwy schowane pod przyciskiem w rogu, opis nad widokiem w jednej linii; poziomo nizszy pasek i bez stopki przy otwartym ekranie.
 - Sprawdzone: 375x812 (widok, Bazowanie na caly ekran, wstecz, Alarmy), 812x375 (menu po lewej), 1920x1080 bez zmian (panel 440 px, bez przycisku wstecz).
 
 ## 2026-11-20
