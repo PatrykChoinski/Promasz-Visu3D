@@ -16,9 +16,22 @@ android {
         // znacznik kodu aplikacji (CI: git rev-parse HEAD:android) - propozycja nowego APK tylko po zmianie
         resValue 'string', 'shell_hash', (project.findProperty('shellHash') ?: 'dev')
     }
+    // staly klucz podpisu (CI: sekrety ANDROID_KEYSTORE_B64 / ANDROID_KEYSTORE_PASSWORD) - aktualizacja APK bez
+    // odinstalowania wymaga tego samego podpisu; bez klucza (lokalnie) - debug
+    def ks = System.getenv('ANDROID_KEYSTORE')
+    signingConfigs {
+        vizuapp {
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias 'vizuapp'
+                keyPassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                storeType 'pkcs12'
+            }
+        }
+    }
     buildTypes {
-        // instalacja z pliku (poza Sklepem Play): podpis kluczem debug wystarcza
-        release { signingConfig signingConfigs.debug; minifyEnabled false }
+        release { signingConfig ks ? signingConfigs.vizuapp : signingConfigs.debug; minifyEnabled false }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

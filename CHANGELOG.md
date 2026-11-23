@@ -6,6 +6,10 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-23
 
+### Android: staly klucz podpisu APK (v1.0.4)
+- Kazda budowa podpisywala APK nowym kluczem debug, wiec Android odrzucal aktualizacje („inny podpis”). Teraz staly klucz (PKCS12, alias `vizuapp`) z sekretow GitHuba `ANDROID_KEYSTORE_B64` / `ANDROID_KEYSTORE_PASSWORD`; bez sekretu budowa wydania sie zatrzymuje. Kopia klucza poza repo. Jednorazowo trzeba odinstalowac starsza aplikacje.
+
+
 ### Android: symulator offline (v1.0.3)
 - Przycisk „Symulator” na ekranie startowym: z internetem wersja z GitHub Pages (zawsze aktualna), bez internetu wersja statyczna wbudowana w APK (`assets/sim/`, budowana w workflow Wydanie z `scripts/build-pages.js`, serwowana pod `https://sim.vizuapp.local/`). APK ok. 2,5 MB.
 

@@ -68,7 +68,14 @@ jobs:
           gradle-version: '8.9'
       - name: Budowa APK
         working-directory: android
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
+          # staly klucz podpisu - bez niego Android nie zainstaluje nowej wersji na starej ("inny podpis")
+          test -n "$ANDROID_KEYSTORE_B64" || { echo "Brak sekretu ANDROID_KEYSTORE_B64"; exit 1; }
+          echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/vizuapp.p12"
+          export ANDROID_KEYSTORE="$RUNNER_TEMP/vizuapp.p12"
           v="${TAG#v}"
           IFS=. read -r ma mi pa <<< "$v"
           code=$(( ${ma:-0} * 1000000 + ${mi:-0} * 1000 + ${pa:-0} ))
