@@ -166,3 +166,12 @@ connection.json
 # historia alarmow PLC (SQLite) - lokalna baza maszyny
 alarms.db
 alarms.db-*
+
+# aplikacja Android (budowana w CI)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+# paczki wydania
+*.zip
+*.apk

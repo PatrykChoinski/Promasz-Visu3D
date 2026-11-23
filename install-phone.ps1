@@ -38,6 +38,21 @@ $lnk.WindowStyle = 7
 $lnk.Save()
 Write-Host "Autostart: $startup\VizuApp serwer.lnk"
 
+# aplikacja na panelu maszyny: skrot "VizuApp" (pulpit i menu Start) z ikona - wlasne okno bez paska przegladarki
+# (vizu.ps1: serwer + okno Edge w trybie aplikacji)
+$ws = New-Object -ComObject WScript.Shell
+foreach ($folder in [Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs')) {
+    $s = $ws.CreateShortcut((Join-Path $folder 'VizuApp.lnk'))
+    $s.TargetPath = 'powershell.exe'
+    $s.Arguments = "-nop -ep bypass -w hidden -File `"$(Join-Path $dir 'vizu.ps1')`""
+    $s.WorkingDirectory = $dir
+    $s.WindowStyle = 7
+    $s.IconLocation = "$(Join-Path $dir 'vizu.ico'),0"
+    $s.Description = 'VizuApp - wizualizacja i sterowanie pila'
+    $s.Save()
+    Write-Host "Skrot aplikacji: $folder\VizuApp.lnk"
+}
+
 # serwer z nowymi ustawieniami (stary - zatrzymany, jesli dziala z tego katalogu)
 Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" | Where-Object { $_.CommandLine -like '*app\src\server\main.js*' } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force }

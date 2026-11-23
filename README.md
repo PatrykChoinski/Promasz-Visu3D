@@ -128,6 +128,36 @@ Dodatkowo w HMI potrzebny jest przycisk ustawiający `bVizuApp`.
    „Podpięcie zmiennych PLC” w rozdziale Rozwój i testy.
 4. Na panelu potrzebna jest przeglądarka z WebGL (Edge albo Chrome).
 
+### Wydania i aktualizacja (GitHub Releases)
+
+Każdy push na `master` po udanych testach publikuje wydanie
+`v<major.minor z package.json>.<numer przebiegu CI>` z dwiema opcjami:
+
+1. **PLC z Windows** (komputer maszyny):
+   - `VizuApp-full.zip` – pierwsza instalacja: rozpakuj do `D:\VizuApp`
+     i uruchom jako administrator `install-phone.ps1`. Skrypt tworzy skrót
+     **VizuApp** (pulpit i menu Start, ikona `vizu.ico`), który otwiera
+     aplikację we własnym oknie bez paska przeglądarki (Edge w trybie
+     aplikacji, osobny profil `browser-profile\`). Dodaje też autostart
+     serwera i otwiera port 8128 w zaporze.
+   - `VizuApp-update.zip` – aktualizacja z aplikacji. Serwer sprawdza GitHuba
+     (gdy jest internet, co 10 min) i pokazuje w górnym pasku zielony przycisk
+     „Aktualizacja”. W oknie Połączenie, w sekcji Wersja, Admin klika
+     „Aktualizuj”. Serwer pobiera paczkę do `update\`, a `update.ps1`
+     podmienia `app\` (poprzednia wersja zostaje w `app.old\`) i uruchamia
+     nowy serwer. `config.json`, `users.json`, `connection.json`,
+     `alarms.db` i `node.exe` zostają bez zmian. Log: `update\update.log`.
+     Strona przeładowuje się sama po restarcie.
+     `GET /api/update`, `POST /api/update` (Admin), `src/server/updater.js`.
+2. **Telefon z Androidem**: `VizuApp-android.apk` (`android/`, budowany
+   w CI). Instalacja z pliku. Ekran startowy szuka maszyn z VizuApp
+   w podsieciach telefonu (Wi-Fi i VPN, `/api/hello`, port 8128), można też
+   wpisać adres. Wybrana maszyna jest zapamiętana i otwiera się na pełnym
+   ekranie. Wstecz na stronie głównej maszyny wraca do listy. Gdy na GitHubie
+   jest nowsze APK, ekran startowy proponuje pobranie.
+
+Lokalnie: `powershell -File build.ps1 -Version 0.2.5 -Zip` (paczki w `dist\`).
+
 ### Logowanie (#145)
 
 Użytkownicy jak w zgłoszeniu: **Operator**, **Serwis**, **Admin**. HMI i PLC

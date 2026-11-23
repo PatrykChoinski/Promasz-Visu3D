@@ -1,0 +1,25 @@
+plugins { id 'com.android.application' }
+
+// wersja z CI: -PvizuVersion=0.2.15 -PvizuCode=15 (jak paczka na PLC)
+def vizuVersion = project.findProperty('vizuVersion') ?: '0.0.0'
+def vizuCode = (project.findProperty('vizuCode') ?: '1') as int
+
+android {
+    namespace 'pl.promasz.vizuapp'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'pl.promasz.vizuapp'
+        minSdk 24
+        targetSdk 34
+        versionCode vizuCode
+        versionName vizuVersion
+    }
+    buildTypes {
+        // instalacja z pliku (poza Sklepem Play): podpis kluczem debug wystarcza
+        release { signingConfig signingConfigs.debug; minifyEnabled false }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

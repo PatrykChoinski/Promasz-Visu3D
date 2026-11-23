@@ -619,3 +619,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .panelTitle { padding: 4px 12px; }
   #panelBack { min-height: 32px; }
 }
+
+/* nowa wersja VizuApp (aktualizacja z GitHuba) */
+.bar .updateBtn, .bar .updateBtn:hover:not(:disabled) { background: var(--ok); color: var(--ink); }
+.bar .updateBtn .lbl { display: inline; }

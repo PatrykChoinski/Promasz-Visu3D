@@ -6,6 +6,14 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-23
 
+### Wydania na GitHubie: PLC z Windows i aplikacja Android, aktualizacja z aplikacji
+- CI (`release`): po testach push na master publikuje wydanie `v0.2.<przebieg>`: `VizuApp-full.zip` (pierwsza instalacja na PLC), `VizuApp-update.zip` (aktualizacja), `VizuApp-android.apk`.
+- Aktualizacja na PLC: `src/server/updater.js` (GitHub Releases, `app\version.json` z `build.ps1 -Version`), `GET/POST /api/update`, `update.ps1` (podmiana `app\`, kopia `app.old\`, przywrocenie przy bledzie, restart serwera). Przycisk „Aktualizacja” w gornym pasku i sekcja Wersja w oknie Polaczenie (Admin).
+- Aplikacja na PLC: skrot VizuApp z ikona (`vizu.ico`) na pulpicie i w menu Start (`install-phone.ps1`), okno Edge w trybie aplikacji z osobnym profilem.
+- Android (`android/`): WebView, ekran startowy z szukaniem maszyn w sieci telefonu (Wi-Fi / VPN), zapamietana maszyna, propozycja nowej wersji APK.
+- Sprawdzone: `update.ps1` na paczce testowej 0.2.1 -> 0.2.2 (serwer wraca z nowa wersja, `app.old`, config i node.exe zostaja); testy `updater.test.js`; `npm test` 201/201. APK budowany tylko w CI (brak Android SDK lokalnie).
+
+
 ### Telefon: widok 3D na caly ekran, ekrany i okna na caly ekran
 - Na telefonie (szerokosc do 700 px albo telefon poziomo) widac tylko widok 3D i menu ekranow (pionowo: pasek na dole, poziomo: po lewej). Klikniecie ekranu otwiera jego panel na caly ekran, przycisk „wstecz” w naglowku wraca do widoku 3D.
 - Okna z gornego paska (Polaczenie, Alarmy, Ruchy reczne, logowanie) na telefonie na caly ekran.

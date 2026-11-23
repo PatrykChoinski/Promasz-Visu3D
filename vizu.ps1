@@ -30,6 +30,8 @@ if (-not $w.AppActivate('VizuApp')) {
         "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
         "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe"
     ) | Where-Object { Test-Path $_ } | Select-Object -First 1
-    if ($browser) { Start-Process -FilePath $browser -ArgumentList "--app=$url", '--start-maximized' }
+    # okno aplikacji (bez paska adresu i kart), osobny profil - niezalezne od zwyklej przegladarki na panelu
+    $appProfile = Join-Path $PSScriptRoot 'browser-profile'
+    if ($browser) { Start-Process -FilePath $browser -ArgumentList "--app=$url", '--start-maximized', "--user-data-dir=`"$appProfile`"", '--no-first-run', '--no-default-browser-check' }
     else { Start-Process $url }
 }

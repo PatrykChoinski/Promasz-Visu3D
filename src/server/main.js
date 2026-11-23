@@ -17,6 +17,7 @@
 // GET /api/connection/scan - serwery OPC UA (sterowniki) w podsieciach tego komputera (plcscan.js; Serwis / Admin)
 // GET /api/hosts     maszyny z VizuApp w podsieciach tego komputera (szuka serwer; wynik pamietany 20 s)
 // POST /api/clientlog {msg} - bledy / start strony (telefon), GET /api/clientlog - ostatnie 100 wpisow (diagnostyka)
+// GET /api/update    wersja VizuApp i najnowsze wydanie z GitHuba (updater.js); POST /api/update - aktualizacja (Admin)
 // GET /api/hello     VizuApp na tym adresie (CORS: telefon szuka maszyn w sieci): nazwa komputera, adres PLC
 // POST /api/connection {endpoint} - nowy adres PLC: zapis w connection.json i laczenie od razu (Serwis / Admin;
 //                    bez logowania - tylko z tego komputera)
@@ -36,6 +37,7 @@ import { Auth, USERS_FILE, loadUsers, bearer } from './auth.js';
 import { PlcControl, loadHmiWrites } from './plcwrite.js';
 import { AlarmDb, ALARMS_DB } from './alarmdb.js';
 import { scanOpcUa, scanVizu } from './plcscan.js';
+import { Updater } from './updater.js';
 import { activeFromValues } from '../shared/alarms.js';
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -86,7 +88,7 @@ export function loadConfig(file) {
 // scripts/build-pages.js zapisuje ja jako plik api/config wersji statycznej (static: true)
 export function clientConfig(cfg, plc, auth = null) {
   return {
-    plc: Boolean(plc), endpoint: cfg.endpoint, variables: cfg.variables, cutSteps: CUT_STEPS,
+    plc: Boolean(plc), endpoint: cfg.endpoint, variables: cfg.variables, cutSteps: CUT_STEPS, version: cfg.version ?? null,
     autoClearOnStart: cfg.autoClearOnStart, materialMargin: cfg.materialMargin,
     materialMinSize: cfg.materialMinSize, frame: cfg.frame, offline: cfg.offline,
     tableThickness: cfg.tableThickness, laser: cfg.laser, saw: cfg.saw,
@@ -160,6 +162,21 @@ async function handleScan(cfg, auth, req, res) {
     return json(res, 200, { endpoint: cfg.endpoint, found: await scanning });
   } catch (err) {
     return json(res, 500, { error: err.message || String(err) });
+  }
+}
+
+// aktualizacja: sprawdzenie - kazdy; wgranie - Admin (bez users.json - tylko z tego komputera)
+async function handleUpdate(updater, auth, req, res) {
+  if (req.method === 'GET') return json(res, 200, await updater.check(new URL(req.url, 'http://x').searchParams.get('force') === '1'));
+  if (req.method !== 'POST') return json(res, 405, { error: 'Metoda niedozwolona' });
+  if (controlAccess(auth, req).level < 3) return json(res, 403, { error: 'Aktualizacja – zaloguj jako Admin' });
+  try {
+    const r = await updater.apply();
+    json(res, 200, r);
+    // update.ps1 czeka na koniec serwera, podmienia app\ i uruchamia nowy serwer
+    setTimeout(() => process.exit(0), 1000);
+  } catch (err) {
+    json(res, err.code || 500, { error: err.message || String(err) });
   }
 }
 
@@ -259,8 +276,9 @@ async function handleAuth(auth, req, res, pathname) {
   return json(res, 405, { error: 'Metoda niedozwolona' });
 }
 
-export function createServer(cfg, source, auth = null, hmiWrites = null, alarmDb = null) {
+export function createServer(cfg, source, auth = null, hmiWrites = null, alarmDb = null, updater = new Updater(APP_DIR)) {
   const clients = new Set();
+  cfg.version ??= updater.version?.version ?? null;
   const control = source ? new PlcControl(source, hmiWrites ?? loadHmiWrites(path.join(APP_DIR, 'src', 'server', 'hmiwrites.json'))) : null;
   const send = (obj) => {
     const msg = `data: ${JSON.stringify(obj)}\n\n`;
@@ -294,6 +312,8 @@ export function createServer(cfg, source, auth = null, hmiWrites = null, alarmDb
     } else if (url.pathname === '/api/hello') {
       res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' });
       res.end(JSON.stringify({ app: 'VizuApp', name: os.hostname(), endpoint: cfg.endpoint, connected: Boolean(source?.connected) }));
+    } else if (url.pathname === '/api/update') {
+      handleUpdate(updater, auth, req, res);
     } else if (url.pathname === '/api/clientlog') {
       handleClientLog(req, res);
     } else if (url.pathname === '/api/hosts') {

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VizuApp</title>
+<style>
+  :root { --bg: #0a1f33; --panel: #12395a; --surface: #164b73; --text: #f2f5f8; --muted: #b4c3d1; --accent: #ff8a1f;
+    --ok: #2bd39a; --bad: #ff4d5e; --border: #2a5c85; }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font: 15px system-ui, sans-serif; padding: 16px; }
+  h1 { font-size: 20px; margin: 4px 0 2px; display: flex; align-items: center; gap: 10px; }
+  h1 img { width: 36px; height: 36px; border-radius: 9px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .card { background: var(--panel); border-radius: 14px; padding: 12px; margin-top: 14px; }
+  .head { display: flex; justify-content: space-between; align-items: center; font-weight: 600; margin-bottom: 8px; }
+  button { font: inherit; border: none; border-radius: 12px; padding: 10px 14px; background: #3a4652; color: var(--text); }
+  button.primary { background: var(--accent); color: var(--bg); font-weight: 600; }
+  .pick { display: block; width: 100%; text-align: left; margin-top: 6px; background: var(--surface); }
+  .pick small { display: block; color: var(--muted); }
+  .pick.last { outline: 2px solid var(--accent); }
+  .row { display: flex; gap: 8px; }
+  input { flex: 1; min-width: 0; font: inherit; padding: 10px; border-radius: 12px; border: none; background: #e4e7ea; color: #0a1f33; }
+  .err { color: var(--bad); }
+  .ok { color: var(--ok); }
+</style>
+</head>
+<body>
+  <h1><img src="../res/mipmap-xxxhdpi/ic_launcher.png" alt="" onerror="this.remove()">VizuApp</h1>
+  <div class="muted" id="ver"></div>
+  <p class="err" id="err" hidden>Maszyna nie odpowiada. Sprawdź Wi-Fi / VPN albo wybierz maszynę poniżej.</p>
+
+  <div class="card" id="updCard" hidden>
+    <div class="head"><span>Nowa wersja aplikacji</span></div>
+    <div class="muted" id="updInfo"></div>
+    <p><button class="primary" id="updBtn">Pobierz i zainstaluj</button></p>
+  </div>
+
+  <div class="card">
+    <div class="head"><span>Maszyny z VizuApp w sieci</span><button id="scanBtn">Szukaj</button></div>
+    <div id="list" class="muted">Szukanie…</div>
+  </div>
+
+  <div class="card">
+    <div class="head"><span>Adres maszyny</span></div>
+    <form class="row" id="manual">
+      <input id="addr" inputmode="url" autocomplete="off" spellcheck="false" placeholder="10.12.0.18">
+      <button class="primary" type="submit">Otwórz</button>
+    </form>
+    <div class="muted" style="margin-top:6px">Adres IP komputera maszyny (port 8128 dodawany sam).</div>
+  </div>
+
+<script>
+  const A = window.VizuAndroid;
+  const $ = (s) => document.querySelector(s);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const version = A ? A.version() : '?';
+  const last = A ? A.lastUrl() : '';
+  $('#ver').textContent = `Wersja aplikacji ${version}` + (last ? ` · ostatnia maszyna: ${last}` : '');
+  if (location.hash === '#error') $('#err').hidden = false;
+
+  function open(url) { if (A) A.open(url); else location.href = url; }
+
+  window.onScan = (found) => {
+    $('#scanBtn').disabled = false;
+    const box = $('#list');
+    if (!found.length) { box.textContent = 'Nie znaleziono maszyn z VizuApp. Sprawdź, czy telefon jest w sieci maszyny (Wi-Fi albo VPN).'; return; }
+    box.innerHTML = '';
+    found.sort((a, b) => a.host.localeCompare(b.host, undefined, { numeric: true }));
+    for (const h of found) {
+      const b = document.createElement('button');
+      b.className = 'pick' + (h.url === last ? ' last' : '');
+      b.innerHTML = `${esc(h.name)} – ${esc(h.host)}<small>PLC ${esc(h.endpoint)}${h.connected ? ' · połączony' : ' · brak połączenia z PLC'}</small>`;
+      b.onclick = () => open(h.url);
+      box.append(b);
+    }
+  };
+  function scan() {
+    $('#scanBtn').disabled = true;
+    $('#list').textContent = 'Szukanie maszyn w sieci…';
+    if (A) A.scan(); else window.onScan([]);
+  }
+  $('#scanBtn').onclick = scan;
+  $('#manual').onsubmit = (e) => {
+    e.preventDefault();
+    let a = $('#addr').value.trim();
+    if (!a) return;
+    if (!/^https?:\/\//.test(a)) a = `http://${a}`;
+    if (!/:\d+(\/|$)/.test(a.replace(/^https?:\/\//, ''))) a = a.replace(/\/?$/, ':8128/');
+    if (!a.endsWith('/')) a += '/';
+    open(a);
+  };
+
+  // nowa wersja aplikacji (jest internet): wydanie na GitHubie z VizuApp-android.apk
+  const cmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(Number), y = String(b).replace(/^v/, '').split('.').map(Number);
+    for (let i = 0; i < 3; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; };
+  window.onRelease = (rel) => {
+    if (!rel || !rel.tag_name) return;
+    const apk = (rel.assets || []).find((a) => a.name === 'VizuApp-android.apk');
+    if (!apk || cmp(rel.tag_name, version) <= 0) return;
+    $('#updCard').hidden = false;
+    $('#updInfo').textContent = `Dostępna wersja ${rel.tag_name} (masz ${version}).`;
+    $('#updBtn').onclick = () => A.download(apk.browser_download_url);
+  };
+  if (A) A.checkRelease();
+  scan();
+</script>
+</body>
+</html>

@@ -699,6 +699,7 @@ async function showConn(open) {
   if (!open) return;
   $('#connPlcBox').hidden = !connAllowed();
   if (!$('#hostFound').childElementCount) scanHosts();
+  if (updState) renderUpdate(updState); else checkUpdate();
   if (!connAllowed()) { $('#connStatus').textContent = 'Adres PLC zmienia Serwis albo Admin (zaloguj się).'; return; }
   const r = await fetch('api/connection', { headers: authHeaders() }).catch(() => null);
   if (!r?.ok) { $('#connErr').textContent = 'Brak połączenia z serwerem VizuApp'; return; }
@@ -789,7 +790,53 @@ async function saveConn(endpoint) {
   if (state.mode !== 'online') setMode('online');
 }
 
+// aktualizacja VizuApp z GitHub Releases (serwer: updater.js): jest internet i nowsza wersja - przycisk w gornym pasku,
+// "Aktualizuj" (Admin) - serwer pobiera paczke i uruchamia sie ponownie, strona przeladowuje sie po restarcie
+let updState = null;
+function renderUpdate(u) {
+  updState = u;
+  const cur = u.current ? `v${u.current}` : 'wersja deweloperska';
+  let info;
+  if (!u.online) info = `${cur}. Brak połączenia z internetem – nie można sprawdzić aktualizacji.`;
+  else if (u.newer) info = `${cur}. Dostępna nowa wersja v${u.latest}${u.published ? ` (${u.published.slice(0, 10)})` : ''}.`;
+  else info = `${cur} – aktualna (najnowsza na GitHubie: v${u.latest}).`;
+  if (u.newer && !u.installed) info += ' Aktualizacja tylko w paczce na maszynie (D:\\VizuApp).';
+  if (u.newer && u.installed && accessLevel() < 3) info += ' Aktualizuje Admin (zaloguj się).';
+  $('#updInfo').textContent = info;
+  $('#updRow').hidden = !(u.newer && u.installed && accessLevel() >= 3);
+  $('#updateBtn').hidden = !(u.newer && u.installed);
+  $('#updateBtn').title = u.newer ? `Dostępna nowa wersja VizuApp v${u.latest} (teraz ${cur})` : '';
+}
+
+async function checkUpdate(force = false) {
+  if (state.cfg?.static) return;
+  const r = await fetch(`api/update${force ? '?force=1' : ''}`, { cache: 'no-store' }).catch(() => null);
+  if (r?.ok) renderUpdate(await r.json());
+}
+
+async function applyUpdate() {
+  $('#updApply').disabled = true;
+  $('#updInfo').textContent = 'Pobieranie nowej wersji…';
+  const r = await fetch('api/update', { method: 'POST', headers: authHeaders() }).catch(() => null);
+  const body = r ? await r.json().catch(() => ({})) : {};
+  if (!r?.ok) { $('#updApply').disabled = false; $('#updInfo').textContent = body.error || 'Brak połączenia z serwerem VizuApp'; return; }
+  $('#updInfo').textContent = `Instalowanie v${body.version}, serwer uruchamia się ponownie…`;
+  const old = state.cfg.version;
+  for (let i = 0; i < 90; i++) {
+    await new Promise((res) => setTimeout(res, 2000));
+    const c = await fetch('api/config', { cache: 'no-store' }).then((x) => x.json()).catch(() => null);
+    if (c && c.version !== old) { location.reload(); return; }
+  }
+  $('#updApply').disabled = false;
+  $('#updInfo').textContent = 'Serwer nie wrócił po aktualizacji – sprawdź update\\update.log w katalogu VizuApp.';
+}
+
 function bindConn() {
+  $('#updateBtn').onclick = () => showConn(true);
+  $('#updCheck').onclick = () => checkUpdate(true);
+  $('#updApply').onclick = () => applyUpdate();
+  checkUpdate();
+  setInterval(() => checkUpdate(), 10 * 60 * 1000);
   $('#connOpen').onclick = () => showConn($('#connWin').hidden);
   $('#connClose').onclick = () => showConn(false);
   $('#connForm').onsubmit = (e) => { e.preventDefault(); saveConn($('#connEndpoint').value.trim()); };
@@ -2082,6 +2129,7 @@ function authChanged() {
   $('#connOpen').hidden = Boolean(state.cfg.static);
   $('#connPlcBox').hidden = !connAllowed();
   if (!$('#connWin').hidden) showConn(true);
+  if (updState) renderUpdate(updState);
   // logowanie zawsze widoczne; bez users.json - informacja, jak zalozyc uzytkownikow
   $('#authBox').hidden = false;
   $('#authUser').innerHTML = a.user ? `<b>${a.user}</b>` : a.enabled ? 'Niezalogowany' : 'Logowanie wyłączone';

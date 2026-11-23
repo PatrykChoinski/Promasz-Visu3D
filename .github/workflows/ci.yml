@@ -2,7 +2,7 @@
 # (develop/*, V36Suwalki, V38 ...) bez testow - recznie: workflow_dispatch:
 #   npm test (geometria, ruch, operacje, OPC UA z testowym PLC, ...) i test uruchomienia strony w przegladarce
 #   (scripts/smoke-test.mjs: serwer bez PLC, serwer z testowym PLC przez OPC UA, wersja statyczna GitHub Pages).
-# Po udanych testach push do master publikuje wersje statyczna na GitHub Pages (https://<konto>.github.io/<repo>/).
+# Po udanych testach push do master: wydanie (GitHub Releases, aktualizacja maszyn) i wersja statyczna na GitHub Pages (https://<konto>.github.io/<repo>/).
 name: CI
 
 on:
@@ -41,6 +41,85 @@ jobs:
           name: zrzuty-strony
           path: test-results/
           if-no-files-found: ignore
+
+  # aplikacja na Androida (android/): WebView z serwerem VizuApp na maszynie, APK do instalacji z pliku
+  android:
+    name: Aplikacja Android (APK)
+    needs: test-windows
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Budowa APK
+        working-directory: android
+        run: |
+          base=$(node -p "require('../package.json').version.split('.').slice(0,2).join('.')")
+          gradle --no-daemon assembleRelease -PvizuVersion="$base.${{ github.run_number }}" -PvizuCode=${{ github.run_number }}
+          cp app/build/outputs/apk/release/app-release.apk ../VizuApp-android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: VizuApp-android.apk
+
+  # wydanie na GitHub Releases (po udanych testach push do master), wersja <major.minor z package.json>.<numer przebiegu>:
+  #   1. PLC z Windows: VizuApp-full.zip (pierwsza instalacja, z node.exe) i VizuApp-update.zip (aktualizacja z aplikacji,
+  #      src/server/updater.js)
+  #   2. Telefon z Androidem: VizuApp-android.apk
+  release:
+    name: Wydanie (GitHub Releases)
+    needs: [test-windows, android]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+          path: dist
+      - name: Paczka PLC (Windows)
+        shell: pwsh
+        run: |
+          $base = ((Get-Content package.json -Raw | ConvertFrom-Json).version -split '\.')[0..1] -join '.'
+          $v = "$base.${{ github.run_number }}"
+          ./build.ps1 -Version $v -SkipTests -Zip
+          "VERSION=$v" >> $env:GITHUB_ENV
+      - name: Wydanie
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          $notes = @"
+          ## Do pobrania
+
+          **1. PLC z Windows (komputer maszyny)**
+          - Pierwsza instalacja: ``VizuApp-full.zip`` - rozpakuj do ``D:\VizuApp`` i uruchom jako administrator ``install-phone.ps1`` (skrot VizuApp na pulpicie, autostart serwera, zapora).
+          - Kolejne wersje: VizuApp sam proponuje aktualizacje (okno Polaczenie, Admin) - ``VizuApp-update.zip``.
+
+          **2. Telefon z Androidem**
+          - ``VizuApp-android.apk`` - zainstaluj z pliku (zezwol na instalacje z nieznanych zrodel). Aplikacja szuka maszyn z VizuApp w sieci (Wi-Fi / VPN).
+
+          ## Zmiany
+          $env:COMMIT_MSG
+          "@
+          Set-Content notes.md $notes -Encoding utf8
+          gh release create "v$env:VERSION" dist/VizuApp-update.zip dist/VizuApp-full.zip dist/VizuApp-android.apk --title "VizuApp v$env:VERSION" --notes-file notes.md --target "${{ github.sha }}" --latest
 
   deploy-pages:
     name: Publikacja GitHub Pages

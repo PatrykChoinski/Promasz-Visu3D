@@ -21,6 +21,8 @@
       <button data-mode="offline" title="Offline – symulacja bez PLC"><svg class="ic" aria-hidden="true"><use href="#i-sim"/></svg><span class="lbl">SIM</span></button>
     </div>
     <button id="connOpen" class="tool" title="Połączenie – PLC i maszyny w sieci, instalacja na telefonie"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg></button>
+    <!-- nowa wersja VizuApp na GitHubie (jest internet): otwiera okno Polaczenie, sekcja Wersja -->
+    <button id="updateBtn" class="tool updateBtn" title="Dostępna nowa wersja VizuApp" hidden><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span class="lbl">Aktualizacja</span></button>
     <!-- #155 alarmy jak w HMI: liczba aktywnych, okno z lista -->
     <button id="alarmOpen" class="tool" title="Alarmy"><svg class="ic" aria-hidden="true"><use href="#i-warn"/></svg><span class="alarmCount" id="alarmCount" hidden></span></button>
     <button id="manOpen" class="tool" title="Ruchy ręczne – okno, które można przesuwać i zamknąć"><svg class="ic" aria-hidden="true"><use href="#i-hand"/></svg></button>
@@ -401,6 +403,9 @@
       <div class="pickHead"><span>Maszyny z VizuApp</span><button type="button" id="hostScan" title="Szukaj maszyn z VizuApp w sieci (telefon / tablet)"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg><span>Szukaj</span></button></div>
       <div class="pickList" id="hostFound"></div>
       <p class="hint" id="connUrls"></p>
+      <div class="pickHead"><span>Wersja</span><button type="button" id="updCheck" title="Sprawdź nową wersję na GitHubie"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg><span>Sprawdź</span></button></div>
+      <p class="hint" id="updInfo"></p>
+      <div class="row" id="updRow" hidden><button type="button" class="primary" id="updApply" title="Pobierz i zainstaluj nową wersję (Admin), serwer uruchomi się ponownie"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Aktualizuj</span></button></div>
       <div class="row" id="installRow" hidden><button type="button" class="primary" id="installBtn" title="Zainstaluj VizuApp jako aplikację"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>Zainstaluj aplikację</span></button></div>
     </div>
   </div>

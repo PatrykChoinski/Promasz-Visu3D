@@ -1,0 +1,9 @@
+// VizuApp na Androida: WebView z serwerem VizuApp na maszynie (szukanie maszyn w sieci, aktualizacja z GitHub Releases)
+pluginManagement {
+    repositories { google(); mavenCentral(); gradlePluginPortal() }
+}
+dependencyResolutionManagement {
+    repositories { google(); mavenCentral() }
+}
+rootProject.name = 'VizuApp'
+include ':app'
