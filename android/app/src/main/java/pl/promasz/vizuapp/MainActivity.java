@@ -71,6 +71,11 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public void onPageFinished(WebView v, String url) {
+                if (url != null && url.startsWith("http:")) remember(url);
+            }
+
+            @Override
             public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest req) {
                 Uri u = req.getUrl();
                 String scheme = u.getScheme();
@@ -90,6 +95,16 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** Zapamietuje maszyne (ostatnia + lista znanych adresow do szukania w ich podsieciach). */
+    void remember(String url) {
+        Uri u = Uri.parse(url);
+        if (!"http".equals(u.getScheme()) || u.getHost() == null) return;
+        Set<String> known = new LinkedHashSet<>(prefs.getStringSet("known", new LinkedHashSet<>()));
+        known.add(u.getHost());
+        String base = u.getScheme() + "://" + u.getHost() + (u.getPort() > 0 ? ":" + u.getPort() : "") + "/";
+        prefs.edit().putString("url", base).putStringSet("known", known).apply();
+    }
+
     @Override
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
@@ -104,9 +119,16 @@ public class MainActivity extends Activity {
         else web.loadUrl(START);
     }
 
-    /** Adresy do sprawdzenia: podsieci /24 kart sieciowych telefonu (Wi-Fi, VPN). */
-    static List<String> hosts() {
+    /**
+     * Adresy do sprawdzenia: podsieci /24 kart sieciowych telefonu (Wi-Fi, VPN) i maszyn otwieranych wczesniej
+     * (VPN czesto daje telefonowi adres z innej podsieci niz maszyny, np. telefon 10.8.0.x, maszyny 10.12.0.x).
+     */
+    static List<String> hosts(Set<String> known) {
         Set<String> out = new LinkedHashSet<>();
+        for (String k : known) {
+            String[] p = k.split("\\.");
+            if (p.length == 4) for (int i = 1; i < 255; i++) out.add(p[0] + "." + p[1] + "." + p[2] + "." + i);
+        }
         try {
             for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
                 if (!ni.isUp() || ni.isLoopback()) continue;
@@ -146,10 +168,14 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String lastUrl() { return prefs.getString("url", ""); }
 
+        /** Znacznik kodu aplikacji (android/ w repo): nowe APK tylko gdy sie zmienil (ekrany przychodza z serwera). */
+        @JavascriptInterface
+        public String shellHash() { return getString(R.string.shell_hash); }
+
         /** Otwiera maszyne i zapamietuje ja na nastepne uruchomienie. */
         @JavascriptInterface
         public void open(String url) {
-            prefs.edit().putString("url", url).apply();
+            remember(url);
             ui.post(() -> web.loadUrl(url));
         }
 
@@ -160,7 +186,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void scan() {
             new Thread(() -> {
-                List<String> hs = hosts();
+                List<String> hs = hosts(prefs.getStringSet("known", new LinkedHashSet<>()));
                 JSONArray found = new JSONArray();
                 ExecutorService pool = Executors.newFixedThreadPool(48);
                 for (String h : hs) {
@@ -178,6 +204,23 @@ public class MainActivity extends Activity {
                 }
                 pool.shutdown();
                 try { pool.awaitTermination(30, TimeUnit.SECONDS); } catch (InterruptedException ignored) { }
+                // maszyny znalezione przez serwery VizuApp (kazdy skanuje swoje podsieci - /api/hosts)
+                Set<String> seen = new LinkedHashSet<>();
+                for (int i = 0; i < found.length(); i++) seen.add(found.optJSONObject(i).optString("name"));
+                int n0 = found.length();
+                for (int i = 0; i < n0; i++) {
+                    try {
+                        JSONArray more = new JSONObject(get(found.getJSONObject(i).getString("url") + "api/hosts", 15000)).getJSONArray("found");
+                        for (int j = 0; j < more.length(); j++) {
+                            JSONObject m = more.getJSONObject(j);
+                            if (!seen.add(m.optString("name"))) continue;
+                            JSONObject r = new JSONObject();
+                            r.put("host", m.optString("host")).put("url", m.optString("url")).put("name", m.optString("name"))
+                                .put("endpoint", m.optString("endpoint")).put("connected", m.optBoolean("connected"));
+                            found.put(r);
+                        }
+                    } catch (Exception ignored) { }
+                }
                 String json = found.toString();
                 ui.post(() -> web.evaluateJavascript("window.onScan && window.onScan(" + json + ")", null));
             }).start();

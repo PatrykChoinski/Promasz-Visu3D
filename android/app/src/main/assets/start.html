@@ -92,15 +92,18 @@
     open(a);
   };
 
-  // nowa wersja aplikacji (jest internet): wydanie na GitHubie z VizuApp-android.apk
+  // nowa wersja aplikacji (jest internet): tylko gdy zmienil sie kod aplikacji na Androida (znacznik android-shell-<hash>.txt
+  // w wydaniu); ekrany i funkcje przychodza z serwera VizuApp na maszynie - ich zmiany nie wymagaja nowego APK
   const cmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(Number), y = String(b).replace(/^v/, '').split('.').map(Number);
     for (let i = 0; i < 3; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; };
   window.onRelease = (rel) => {
     if (!rel || !rel.tag_name) return;
     const apk = (rel.assets || []).find((a) => a.name === 'VizuApp-android.apk');
-    if (!apk || cmp(rel.tag_name, version) <= 0) return;
+    const shell = (rel.assets || []).map((a) => /^android-shell-(\w+)\.txt$/.exec(a.name)).find(Boolean);
+    const mine = A && A.shellHash ? A.shellHash() : '';
+    if (!apk || !shell || shell[1] === mine || cmp(rel.tag_name, version) <= 0) return;
     $('#updCard').hidden = false;
-    $('#updInfo').textContent = `Dostępna wersja ${rel.tag_name} (masz ${version}).`;
+    $('#updInfo').textContent = `Nowa wersja aplikacji ${rel.tag_name} (masz ${version}). Ekrany maszyny aktualizują się same – to dotyczy tylko aplikacji na telefonie.`;
     $('#updBtn').onclick = () => A.download(apk.browser_download_url);
   };
   if (A) A.checkRelease();

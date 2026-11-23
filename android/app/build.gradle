@@ -13,6 +13,8 @@ android {
         targetSdk 34
         versionCode vizuCode
         versionName vizuVersion
+        // znacznik kodu aplikacji (CI: git rev-parse HEAD:android) - propozycja nowego APK tylko po zmianie
+        resValue 'string', 'shell_hash', (project.findProperty('shellHash') ?: 'dev')
     }
     buildTypes {
         // instalacja z pliku (poza Sklepem Play): podpis kluczem debug wystarcza

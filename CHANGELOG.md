@@ -6,6 +6,11 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-23
 
+### Android: szukanie maszyn przez VPN, aktualizacja APK tylko po zmianie aplikacji (v1.0.2)
+- Szukanie: oprocz podsieci telefonu takze podsieci maszyn otwieranych wczesniej (VPN daje telefonowi adres z innej podsieci) i maszyny znalezione przez serwery VizuApp (`/api/hosts`).
+- Nowe APK proponowane tylko gdy zmienil sie kod aplikacji na Androida (znacznik `android-shell-<hash>.txt` w wydaniu); ekrany przychodza z serwera na maszynie i aktualizuja sie razem z PLC.
+
+
 ### Instalator VizuApp-setup.exe na PLC z Windows (v1.0.1)
 - `installer.iss` (Inno Setup, budowany w workflow Wydanie): instalacja do `D:\VizuApp` (bez dysku D - `C:\VizuApp`), potem `install-phone.ps1` (zapora, autostart, skrot VizuApp), opcja „Uruchom VizuApp”. Ustawienia i uzytkownicy zostaja przy ponownej instalacji. Dezinstalator: `uninstall.ps1` (serwer, regula zapory), skroty, `app\`, `app.old\`, `update\`.
 - Sprawdzone: budowa w CI (v1.0.1, 27 MB). Instalacji nie uruchamialem (zmienia zapore i autostart komputera).
