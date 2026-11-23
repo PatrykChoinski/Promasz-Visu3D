@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -53,6 +54,8 @@ public class MainActivity extends Activity {
     WebView web;
     SharedPreferences prefs;
     final Handler ui = new Handler(Looper.getMainLooper());
+    /** Diagnostyka: bledy konsoli i nieudane pliki biezacej strony - pokazywane na stronie (czerwona ramka). */
+    final List<String> problems = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     protected void onCreate(Bundle state) {
@@ -68,12 +71,34 @@ public class MainActivity extends Activity {
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         s.setAllowFileAccess(true);
         s.setTextZoom(100);
-        web.setWebChromeClient(new WebChromeClient());
+        WebView.setWebContentsDebuggingEnabled(true);
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage m) {
+                if (m.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
+                    problems.add(m.message() + " (" + m.sourceId() + ":" + m.lineNumber() + ")");
+                    showProblems();
+                }
+                return false;
+            }
+        });
         web.setWebViewClient(new WebViewClient() {
             @Override
             public void onReceivedError(WebView v, WebResourceRequest req, WebResourceError err) {
                 // maszyna nie odpowiada - ekran startowy z komunikatem
                 if (req.isForMainFrame()) v.loadUrl(START + "#error");
+                else { problems.add("Nie wczytano: " + req.getUrl() + " (" + err.getDescription() + ")"); showProblems(); }
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView v, WebResourceRequest req, WebResourceResponse res) {
+                problems.add("HTTP " + res.getStatusCode() + ": " + req.getUrl());
+                showProblems();
+            }
+
+            @Override
+            public void onPageStarted(WebView v, String url, android.graphics.Bitmap icon) {
+                problems.clear();
             }
 
             @Override
@@ -111,6 +136,21 @@ public class MainActivity extends Activity {
             String last = prefs.getString("url", null);
             web.loadUrl(last != null ? last : START);
         }
+    }
+
+    /** Bledy strony w czerwonej ramce na dole ekranu (zeby bylo widac, co nie zadzialalo). */
+    void showProblems() {
+        ui.postDelayed(() -> {
+            String text;
+            synchronized (problems) { text = String.join("\n", problems); }
+            if (text.isEmpty()) return;
+            String js = "(function(t){var b=document.getElementById('vizuDiag');if(!b){b=document.createElement('pre');b.id='vizuDiag';"
+                + "b.style.cssText='position:fixed;left:6px;right:6px;bottom:6px;z-index:2147483647;max-height:45vh;overflow:auto;margin:0;"
+                + "padding:8px;background:#5c0b14;color:#fff;font:11px/1.35 monospace;white-space:pre-wrap;border-radius:8px';"
+                + "b.onclick=function(){b.remove()};(document.body||document.documentElement).appendChild(b);}"
+                + "b.textContent='VizuApp - bledy strony (dotknij, aby zamknac):\\n'+t;})(" + JSONObject.quote(text) + ")";
+            web.evaluateJavascript(js, null);
+        }, 300);
     }
 
     static String mime(String path) {

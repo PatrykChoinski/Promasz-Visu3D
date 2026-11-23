@@ -6,6 +6,10 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-23
 
+### Android: diagnostyka strony (v1.0.5)
+- Bledy konsoli i nieudane pliki biezacej strony w czerwonej ramce na dole ekranu (dotkniecie zamyka); debugowanie WebView (chrome://inspect przez USB).
+
+
 ### Android: staly klucz podpisu APK (v1.0.4)
 - Kazda budowa podpisywala APK nowym kluczem debug, wiec Android odrzucal aktualizacje („inny podpis”). Teraz staly klucz (PKCS12, alias `vizuapp`) z sekretow GitHuba `ANDROID_KEYSTORE_B64` / `ANDROID_KEYSTORE_PASSWORD`; bez sekretu budowa wydania sie zatrzymuje. Kopia klucza poza repo. Jednorazowo trzeba odinstalowac starsza aplikacje.
 
