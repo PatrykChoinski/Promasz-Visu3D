@@ -6,6 +6,10 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-23
 
+### Telefon: gorny pasek na cala szerokosc
+- Na telefonie logowanie jako sam piktogram (zalogowany - zielony, nazwa w podpowiedzi), mniejsze przyciski i odstepy, tempo symulacji bez ikony - pasek miesci sie bez przewijania (360 px: SIM i PLC ze STOP / PAUZA).
+
+
 ### Android: diagnostyka strony (v1.0.5)
 - Bledy konsoli i nieudane pliki biezacej strony w czerwonej ramce na dole ekranu (dotkniecie zamyka); debugowanie WebView (chrome://inspect przez USB).
 

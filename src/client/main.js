@@ -2135,6 +2135,8 @@ function authChanged() {
   $('#authUser').innerHTML = a.user ? `<b>${a.user}</b>` : a.enabled ? 'Niezalogowany' : 'Logowanie wyłączone';
   $('#loginBtn').innerHTML = icon(a.user ? 'logout' : 'login');
   $('#loginBtn').title = a.user ? `Wyloguj (${a.user})` : 'Zaloguj';
+  // telefon: sam piktogram logowania - zalogowany wyrozniony kolorem (body.loggedIn)
+  document.body.classList.toggle('loggedIn', Boolean(a.user));
   if (state.forms) {
     showOp();
     showFig();

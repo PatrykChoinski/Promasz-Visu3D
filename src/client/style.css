@@ -623,3 +623,20 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* nowa wersja VizuApp (aktualizacja z GitHuba) */
 .bar .updateBtn, .bar .updateBtn:hover:not(:disabled) { background: var(--ok); color: var(--ink); }
 .bar .updateBtn .lbl { display: inline; }
+
+/* telefon: gorny pasek na cala szerokosc bez przewijania - logowanie jako sam piktogram (zalogowany - zielony),
+   mniejsze przyciski i odstepy, tempo symulacji bez ikony */
+@media (max-width: 700px), (max-height: 500px) and (max-width: 1000px) {
+  .bar { gap: 2px; padding: 3px 4px; justify-content: space-between; overflow-x: hidden; }
+  .bar button, .bar button.tool { min-height: 34px; padding: 2px 5px; }
+  .bar .ic { width: 20px; height: 20px; }
+  .seg button { padding: 2px 6px; }
+  #authBox { padding: 0; gap: 0; background: transparent; }
+  #authBox > .ic, #authUser { display: none; }
+  body.loggedIn #loginBtn { background: var(--ok); color: var(--ink); }
+  #speedBox { padding: 0 2px; gap: 0; }
+  #speedBox > .ic { display: none; }
+  #speedBox select { min-height: 30px; padding: 0 2px; font-size: 13px; }
+  .bar .plcStop .lbl { font-size: 12px; }
+  .spacer { display: none; }
+}
