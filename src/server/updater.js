@@ -83,9 +83,16 @@ export class Updater {
       if (!r.ok) throw new Error(`pobieranie ${r.status}`);
       fs.writeFileSync(zip, Buffer.from(await r.arrayBuffer()));
       this.log(`[aktualizacja] pobrane ${info.latest} (${fs.statSync(zip).size} B), restart serwera`);
-      const ps = spawn('powershell.exe', ['-nop', '-ep', 'bypass', '-w', 'hidden', '-File', path.join(this.root, 'update.ps1'),
-        '-Zip', zip, '-WaitPid', String(process.pid)], { cwd: this.root, detached: true, stdio: 'ignore', windowsHide: true });
-      ps.unref();
+      // update.ps1 jako osobny proces przez WMI (Win32_Process.Create): poza grupa procesow (job) serwera - nie konczy
+      // sie razem z serwerem (np. serwer uruchomiony z harmonogramu / innej konsoli)
+      const cmd = `powershell.exe -nop -ep bypass -w hidden -File "${path.join(this.root, 'update.ps1')}" -Zip "${zip}" -WaitPid ${process.pid}`;
+      await new Promise((resolve, reject) => {
+        const ps = spawn('powershell.exe', ['-nop', '-NonInteractive', '-Command',
+          `$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = '${cmd.replace(/'/g, "''")}'; CurrentDirectory = '${this.root.replace(/'/g, "''")}' }; exit $r.ReturnValue`],
+        { stdio: 'ignore', windowsHide: true });
+        ps.on('error', reject);
+        ps.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`uruchomienie update.ps1: kod ${code}`))));
+      });
       return { ok: true, version: info.latest };
     } catch (err) {
       this.busy = false;
