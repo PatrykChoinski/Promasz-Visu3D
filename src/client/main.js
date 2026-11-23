@@ -2595,10 +2595,19 @@ function setMode(mode) {
   requestDraw();
 }
 
+// telefon (jak @media w style.css): widok 3D na caly ekran, ekrany i okna otwierane na caly ekran
+const PHONE = matchMedia('(max-width: 700px), (max-height: 500px) and (max-width: 1000px)');
+const panelBack = document.getElementById('panelBack');
+// okna na telefonie zaczynaja sie pod gornym paskiem (STOP / PAUZA zawsze widoczne)
+new ResizeObserver(() => document.documentElement.style.setProperty('--hdrH', `${document.querySelector('header.bar').offsetHeight}px`))
+  .observe(document.querySelector('header.bar'));
+
 // Tytul panelu: ikona i nazwa ekranu z przycisku w lewym menu
 function setPanelTitle(name) {
   const tb = $(`.tabs [data-tab="${name}"]`);
   if (tb) $('#panelTitle').innerHTML = `${tb.innerHTML}<span>${tb.title}</span>`;
+  // telefon: "wstecz" w naglowku panelu (przyklejonym u gory)
+  $('#panelTitle').prepend(panelBack);
 }
 
 function showTab(name) {
@@ -3318,7 +3327,9 @@ function bindUi() {
   $('#showFrame').onchange = () => { try { localStorage.setItem('vizuapp.frame', $('#showFrame').checked ? '1' : '0'); } catch { /* jw. */ } requestDraw(); };
   $('#view').ondblclick = fit;
 
-  for (const t of $$('.tabs button')) t.onclick = () => showTab(t.dataset.tab);
+  // telefon: klikniecie ekranu otwiera jego panel na caly ekran, "wstecz" wraca do widoku 3D
+  for (const t of $$('.tabs button')) t.onclick = () => { showTab(t.dataset.tab); if (PHONE.matches) document.body.classList.add('panelOpen'); };
+  panelBack.onclick = () => { document.body.classList.remove('panelOpen'); requestDraw(); };
   for (const el of $$('[data-m], [data-d]')) el.addEventListener('input', offlineFormsChanged);
   $('#showPlan').onchange = requestDraw;
   // przelaczniki XY, Odleglosci, przezroczysty kamien #150, ukrywanie wycietych elementow #156 (zapamietywane w przegladarce)

@@ -4,6 +4,15 @@ Zmiany w Promasz Visu3D (VizuApp) – wizualizacji cięcia piły mostowej Promas
 (zgłoszenie [#128](https://github.com/Induprogress/Promasz_PilaJednosuportowa/issues/128)
 w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); historia commitów została przeniesiona tutaj.
 
+## 2026-11-23
+
+### Telefon: widok 3D na caly ekran, ekrany i okna na caly ekran
+- Na telefonie (szerokosc do 700 px albo telefon poziomo) widac tylko widok 3D i menu ekranow (pionowo: pasek na dole, poziomo: po lewej). Klikniecie ekranu otwiera jego panel na caly ekran, przycisk „wstecz” w naglowku wraca do widoku 3D.
+- Okna z gornego paska (Polaczenie, Alarmy, Ruchy reczne, logowanie) na telefonie na caly ekran.
+- Gorny pasek (STOP / PAUZA) zawsze widoczny, jeden przewijany wiersz bez napisow (poza STOP).
+- Komputer / panel maszyny bez zmian (tylko reguly @media dla telefonu).
+- Sprawdzone: 375x812 (widok, Bazowanie na caly ekran, wstecz, Alarmy), 812x375 (menu po lewej), 1920x1080 bez zmian (panel 440 px, bez przycisku wstecz).
+
 ## 2026-11-20
 
 ### Telefon bez laptopa: maszyna + telefon w jednej sieci Wi-Fi (#148)
