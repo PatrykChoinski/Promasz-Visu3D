@@ -130,8 +130,10 @@ Dodatkowo w HMI potrzebny jest przycisk ustawiający `bVizuApp`.
 
 ### Wydania i aktualizacja (GitHub Releases)
 
-Każdy push na `master` po udanych testach publikuje wydanie
-`v<major.minor z package.json>.<numer przebiegu CI>` z dwiema opcjami:
+Aplikacje budują się tylko przy wydaniu (GitHub Pages – jak dotąd przy każdym
+pushu na `master`). Releases → „Draft a new release” → tag np. `v0.3.0` →
+Publish: workflow `Wydanie` (`.github/workflows/release.yml`) testuje,
+buduje i dokłada do wydania pliki z wersją z taga, w dwóch opcjach:
 
 1. **PLC z Windows** (komputer maszyny):
    - `VizuApp-full.zip` – pierwsza instalacja: rozpakuj do `D:\VizuApp`

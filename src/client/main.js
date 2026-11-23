@@ -3515,19 +3515,20 @@ function reportError(msg) {
     }
     box.textContent += `${text}\n`;
   } catch { /* brak DOM */ }
-  fetch('api/clientlog', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ msg: text }) }).catch(() => {});
+  // wersja statyczna (GitHub Pages) - bez serwera, log tylko na ekranie
+  if (!state.cfg?.static) fetch('api/clientlog', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ msg: text }) }).catch(() => {});
 }
 window.addEventListener('error', (e) => reportError(`${e.message} (${e.filename}:${e.lineno}:${e.colno})\n${e.error?.stack || ''}`));
 window.addEventListener('unhandledrejection', (e) => reportError(`Promise: ${e.reason?.stack || e.reason}`));
 
-const clientLog = (msg) => fetch('api/clientlog', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ msg, info: true }) }).catch(() => {});
+const clientLog = (msg) => !state.cfg?.static && fetch('api/clientlog', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ msg, info: true }) }).catch(() => {});
 
 async function init() {
-  clientLog(`start ${innerWidth}x${innerHeight}`);
   installIcons();
   watchPlcNames();
   view = new View3D($('#view'));
   state.cfg = await (await fetch('api/config')).json();
+  clientLog(`start ${innerWidth}x${innerHeight}`);
   buildPointTables();
   loadForms();
   $('#showFrame').checked = state.cfg.frame.show;

@@ -1,0 +1,110 @@
+# Wydanie VizuApp: aplikacje budowane tylko przy wydaniu na GitHubie (nie przy kazdym pushu).
+#   Releases -> "Draft a new release" -> tag np. v0.3.0 -> Publish: testy, potem do wydania dokladane sa:
+#   1. PLC z Windows: VizuApp-full.zip (pierwsza instalacja, z node.exe), VizuApp-update.zip (aktualizacja z aplikacji,
+#      src/server/updater.js - VizuApp na maszynie sam proponuje nowa wersje)
+#   2. Telefon z Androidem: VizuApp-android.apk (android/)
+#   Wersja = tag bez "v". Recznie: Actions -> Wydanie -> Run workflow (tag istniejacego wydania).
+name: Wydanie
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag wydania (np. v0.3.0)'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  test:
+    name: Testy (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  android:
+    name: Aplikacja Android (APK)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Budowa APK
+        working-directory: android
+        run: |
+          v="${TAG#v}"
+          IFS=. read -r ma mi pa <<< "$v"
+          code=$(( ${ma:-0} * 1000000 + ${mi:-0} * 1000 + ${pa:-0} ))
+          gradle --no-daemon assembleRelease -PvizuVersion="$v" -PvizuCode=$code
+          cp app/build/outputs/apk/release/app-release.apk ../VizuApp-android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: VizuApp-android.apk
+
+  plc:
+    name: Paczka PLC (Windows) i pliki wydania
+    needs: [test, android]
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+          path: dist
+      - name: Paczka PLC
+        shell: pwsh
+        run: ./build.ps1 -Version ($env:TAG -replace '^v', '') -SkipTests -Zip
+      - name: Pliki do wydania
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload $env:TAG dist/VizuApp-update.zip dist/VizuApp-full.zip dist/VizuApp-android.apk --clobber
+          $notes = @"
+
+          ## Do pobrania
+
+          **1. PLC z Windows (komputer maszyny)**
+          - Pierwsza instalacja: ``VizuApp-full.zip`` - rozpakuj do ``D:\VizuApp`` i uruchom jako administrator ``install-phone.ps1`` (skrot VizuApp na pulpicie, autostart serwera, zapora).
+          - Kolejne wersje: VizuApp sam proponuje aktualizacje (gorny pasek / okno Polaczenie, Admin) - ``VizuApp-update.zip``.
+
+          **2. Telefon z Androidem**
+          - ``VizuApp-android.apk`` - zainstaluj z pliku. Aplikacja szuka maszyn z VizuApp w sieci (Wi-Fi / VPN).
+          "@
+          $body = (gh release view $env:TAG --json body -q .body)
+          if ($body -notmatch '## Do pobrania') { gh release edit $env:TAG --notes "$body$notes" }
