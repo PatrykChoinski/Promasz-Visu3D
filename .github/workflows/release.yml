@@ -1,6 +1,6 @@
 # Wydanie VizuApp: aplikacje budowane tylko przy wydaniu na GitHubie (nie przy kazdym pushu).
 #   Releases -> "Draft a new release" -> tag np. v0.3.0 -> Publish: testy, potem do wydania dokladane sa:
-#   1. PLC z Windows: VizuApp-full.zip (pierwsza instalacja, z node.exe), VizuApp-update.zip (aktualizacja z aplikacji,
+#   1. PLC z Windows: VizuApp-setup.exe (instalator, installer.iss), VizuApp-full.zip (pierwsza instalacja, z node.exe), VizuApp-update.zip (aktualizacja z aplikacji,
 #      src/server/updater.js - VizuApp na maszynie sam proponuje nowa wersje)
 #   2. Telefon z Androidem: VizuApp-android.apk (android/)
 #   Wersja = tag bez "v". Recznie: Actions -> Wydanie -> Run workflow (tag istniejacego wydania).
@@ -89,18 +89,25 @@ jobs:
       - name: Paczka PLC
         shell: pwsh
         run: ./build.ps1 -Version ($env:TAG -replace '^v', '') -SkipTests -Zip
+      - name: Instalator (Inno Setup)
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress | Out-Null
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DVersion=$($env:TAG -replace '^v', '')" installer.iss
+          if ($LASTEXITCODE) { throw 'ISCC: blad' }
       - name: Pliki do wydania
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload $env:TAG dist/VizuApp-update.zip dist/VizuApp-full.zip dist/VizuApp-android.apk --clobber
+          gh release upload $env:TAG dist/VizuApp-setup.exe dist/VizuApp-update.zip dist/VizuApp-full.zip dist/VizuApp-android.apk --clobber
           $notes = @"
 
           ## Do pobrania
 
           **1. PLC z Windows (komputer maszyny)**
-          - Pierwsza instalacja: ``VizuApp-full.zip`` - rozpakuj do ``D:\VizuApp`` i uruchom jako administrator ``install-phone.ps1`` (skrot VizuApp na pulpicie, autostart serwera, zapora).
+          - Instalacja: ``VizuApp-setup.exe`` - instalator (domyslnie ``D:\VizuApp``): skrot VizuApp na pulpicie i w menu Start, autostart serwera, zapora. Ponowna instalacja zostawia ustawienia i uzytkownikow.
+          - Bez instalatora: ``VizuApp-full.zip`` - rozpakuj do ``D:\VizuApp`` i uruchom jako administrator ``install-phone.ps1``.
           - Kolejne wersje: VizuApp sam proponuje aktualizacje (gorny pasek / okno Polaczenie, Admin) - ``VizuApp-update.zip``.
 
           **2. Telefon z Androidem**
