@@ -136,7 +136,12 @@ Publish: workflow `Wydanie` (`.github/workflows/release.yml`) testuje,
 buduje i dokłada do wydania pliki z wersją z taga, w dwóch opcjach:
 
 1. **PLC z Windows** (komputer maszyny):
-   - `VizuApp-full.zip` – pierwsza instalacja: rozpakuj do `D:\VizuApp`
+   - `VizuApp-setup.exe` – instalator (Inno Setup, `installer.iss`), domyślnie
+     `D:\VizuApp`. Instaluje wszystko (node.exe, serwer, strona) i robi to samo
+     co `install-phone.ps1`. Ponowna instalacja zostawia `config.json`,
+     `users.json`, `connection.json` i `alarms.db`. Dezinstalacja w „Aplikacje
+     i funkcje” (`uninstall.ps1`: serwer, reguła zapory, skróty).
+   - `VizuApp-full.zip` – bez instalatora: rozpakuj do `D:\VizuApp`
      i uruchom jako administrator `install-phone.ps1`. Skrypt tworzy skrót
      **VizuApp** (pulpit i menu Start, ikona `vizu.ico`), który otwiera
      aplikację we własnym oknie bez paska przeglądarki (Edge w trybie

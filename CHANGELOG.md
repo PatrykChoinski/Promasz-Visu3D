@@ -6,6 +6,11 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ## 2026-11-23
 
+### Instalator VizuApp-setup.exe na PLC z Windows (v1.0.1)
+- `installer.iss` (Inno Setup, budowany w workflow Wydanie): instalacja do `D:\VizuApp` (bez dysku D - `C:\VizuApp`), potem `install-phone.ps1` (zapora, autostart, skrot VizuApp), opcja „Uruchom VizuApp”. Ustawienia i uzytkownicy zostaja przy ponownej instalacji. Dezinstalator: `uninstall.ps1` (serwer, regula zapory), skroty, `app\`, `app.old\`, `update\`.
+- Sprawdzone: budowa w CI (v1.0.1, 27 MB). Instalacji nie uruchamialem (zmienia zapore i autostart komputera).
+
+
 ### Wydania na GitHubie: PLC z Windows i aplikacja Android, aktualizacja z aplikacji
 - Workflow `Wydanie` (`.github/workflows/release.yml`), tylko przy opublikowaniu wydania na GitHubie (tag np. `v0.3.0`; Pages bez zmian - przy pushu na master): testy i pliki wydania: `VizuApp-full.zip` (pierwsza instalacja na PLC), `VizuApp-update.zip` (aktualizacja), `VizuApp-android.apk`.
 - Aktualizacja na PLC: `src/server/updater.js` (GitHub Releases, `app\version.json` z `build.ps1 -Version`), `GET/POST /api/update`, `update.ps1` (podmiana `app\`, kopia `app.old\`, przywrocenie przy bledzie, restart serwera). Przycisk „Aktualizacja” w gornym pasku i sekcja Wersja w oknie Polaczenie (Admin).
