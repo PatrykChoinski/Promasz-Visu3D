@@ -3441,7 +3441,29 @@ function bindUi() {
   };
 }
 
+// bledy strony (np. telefon / inna przegladarka): na ekran i do serwera (GET /api/clientlog - diagnostyka z laptopa)
+function reportError(msg) {
+  const text = String(msg).slice(0, 2000);
+  try {
+    let box = $('#clientErr');
+    if (!box) {
+      box = document.createElement('pre');
+      box.id = 'clientErr';
+      box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99;max-height:40vh;overflow:auto;margin:0;padding:8px;'
+        + 'background:#5c0b14;color:#fff;font:12px/1.4 monospace;white-space:pre-wrap;border-radius:8px';
+      document.body.append(box);
+    }
+    box.textContent += `${text}\n`;
+  } catch { /* brak DOM */ }
+  fetch('api/clientlog', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ msg: text }) }).catch(() => {});
+}
+window.addEventListener('error', (e) => reportError(`${e.message} (${e.filename}:${e.lineno}:${e.colno})\n${e.error?.stack || ''}`));
+window.addEventListener('unhandledrejection', (e) => reportError(`Promise: ${e.reason?.stack || e.reason}`));
+
+const clientLog = (msg) => fetch('api/clientlog', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ msg, info: true }) }).catch(() => {});
+
 async function init() {
+  clientLog(`start ${innerWidth}x${innerHeight}`);
   installIcons();
   watchPlcNames();
   view = new View3D($('#view'));
@@ -3472,6 +3494,7 @@ async function init() {
     $('#mode [data-mode="offline"]').title = 'Wersja statyczna (GitHub Pages) - symulacja bez PLC; online tylko z serwerem VizuApp na maszynie';
   }
   setMode(mode);
+  clientLog('ok');
 }
 
 init();

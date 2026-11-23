@@ -16,6 +16,7 @@
 // GET /api/connection  adres PLC (OPC UA), domyslny adres, adresy strony w sieci (#148)
 // GET /api/connection/scan - serwery OPC UA (sterowniki) w podsieciach tego komputera (plcscan.js; Serwis / Admin)
 // GET /api/hosts     maszyny z VizuApp w podsieciach tego komputera (szuka serwer; wynik pamietany 20 s)
+// POST /api/clientlog {msg} - bledy / start strony (telefon), GET /api/clientlog - ostatnie 100 wpisow (diagnostyka)
 // GET /api/hello     VizuApp na tym adresie (CORS: telefon szuka maszyn w sieci): nazwa komputera, adres PLC
 // POST /api/connection {endpoint} - nowy adres PLC: zapis w connection.json i laczenie od razu (Serwis / Admin;
 //                    bez logowania - tylko z tego komputera)
@@ -162,6 +163,19 @@ async function handleScan(cfg, auth, req, res) {
   }
 }
 
+const clientLogs = [];
+async function handleClientLog(req, res) {
+  if (req.method === 'GET') return json(res, 200, clientLogs);
+  if (req.method !== 'POST') return json(res, 405, { error: 'Metoda niedozwolona' });
+  const { msg, info } = await readJson(req, 8192);
+  const e = { at: new Date().toISOString(), ip: req.socket.remoteAddress, ua: String(req.headers['user-agent'] || '').slice(0, 300),
+    msg: String(msg ?? '').slice(0, 2000), info: Boolean(info) };
+  clientLogs.push(e);
+  if (clientLogs.length > 100) clientLogs.shift();
+  if (!e.info) console.log(`[strona ${e.ip}] ${e.msg.split(/\r?\n/)[0]}`);
+  return json(res, 200, { ok: true });
+}
+
 let hostsScan = null;
 let hostsCache = null;
 // jedna pozycja na maszyne (kilka kart sieciowych): adres z podsieci, przez ktora przyszlo zapytanie (telefon)
@@ -280,6 +294,8 @@ export function createServer(cfg, source, auth = null, hmiWrites = null, alarmDb
     } else if (url.pathname === '/api/hello') {
       res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' });
       res.end(JSON.stringify({ app: 'VizuApp', name: os.hostname(), endpoint: cfg.endpoint, connected: Boolean(source?.connected) }));
+    } else if (url.pathname === '/api/clientlog') {
+      handleClientLog(req, res);
     } else if (url.pathname === '/api/hosts') {
       handleHosts(cfg, req, res);
     } else if (url.pathname === '/api/connection/scan') {
