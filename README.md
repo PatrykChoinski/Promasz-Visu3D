@@ -160,7 +160,10 @@ buduje i dokłada do wydania pliki z wersją z taga, w dwóch opcjach:
    w CI). Instalacja z pliku. Ekran startowy szuka maszyn z VizuApp
    w podsieciach telefonu (Wi-Fi i VPN, `/api/hello`, port 8128), można też
    wpisać adres. Wybrana maszyna jest zapamiętana i otwiera się na pełnym
-   ekranie. Wstecz na stronie głównej maszyny wraca do listy. Gdy na GitHubie
+   ekranie. Wstecz na stronie głównej maszyny wraca do listy. Przycisk
+   „Symulator” – tryb SIM bez maszyny: z internetem wersja z GitHub Pages,
+   bez internetu wersja wbudowana w APK (`assets/sim/`). Nowe APK proponowane
+   tylko po zmianie kodu aplikacji (`android-shell-<hash>.txt` w wydaniu). Gdy na GitHubie
    jest nowsze APK, ekran startowy proponuje pobranie.
 
 Lokalnie: `powershell -File build.ps1 -Version 0.2.5 -Zip` (paczki w `dist\`).

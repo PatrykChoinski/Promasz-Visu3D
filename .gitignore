@@ -175,3 +175,4 @@ android/local.properties
 # paczki wydania
 *.zip
 *.apk
+android/app/src/main/assets/sim/

@@ -43,6 +43,11 @@
   </div>
 
   <div class="card">
+    <div class="head"><span>Symulator</span><button class="primary" id="simBtn">Otwórz</button></div>
+    <div class="muted" id="simInfo">Symulacja cięcia bez maszyny (tryb SIM), działa też bez internetu.</div>
+  </div>
+
+  <div class="card">
     <div class="head"><span>Adres maszyny</span></div>
     <form class="row" id="manual">
       <input id="addr" inputmode="url" autocomplete="off" spellcheck="false" placeholder="10.12.0.18">
@@ -65,7 +70,7 @@
   window.onScan = (found) => {
     $('#scanBtn').disabled = false;
     const box = $('#list');
-    if (!found.length) { box.textContent = 'Nie znaleziono maszyn z VizuApp. Sprawdź, czy telefon jest w sieci maszyny (Wi-Fi albo VPN).'; return; }
+    if (!found.length) { box.textContent = 'Nie znaleziono maszyn z VizuApp. Sprawdź, czy telefon jest w sieci maszyny (Wi-Fi albo VPN), albo otwórz symulator.'; return; }
     box.innerHTML = '';
     found.sort((a, b) => a.host.localeCompare(b.host, undefined, { numeric: true }));
     for (const h of found) {
@@ -96,8 +101,12 @@
   // w wydaniu); ekrany i funkcje przychodza z serwera VizuApp na maszynie - ich zmiany nie wymagaja nowego APK
   const cmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(Number), y = String(b).replace(/^v/, '').split('.').map(Number);
     for (let i = 0; i < 3; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; };
+  let online = false;
+  $('#simBtn').onclick = () => { if (A) A.sim(online); };
   window.onRelease = (rel) => {
     if (!rel || !rel.tag_name) return;
+    online = true;
+    $('#simInfo').textContent = 'Symulacja cięcia bez maszyny (tryb SIM) – najnowsza wersja z internetu; bez internetu wersja z aplikacji.';
     const apk = (rel.assets || []).find((a) => a.name === 'VizuApp-android.apk');
     const shell = (rel.assets || []).map((a) => /^android-shell-(\w+)\.txt$/.exec(a.name)).find(Boolean);
     const mine = A && A.shellHash ? A.shellHash() : '';

@@ -11,6 +11,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -43,6 +44,11 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends Activity {
     static final String START = "file:///android_asset/start.html";
     static final int PORT = 8128;
+    /** Symulator offline: wersja statyczna (scripts/build-pages.js) w assets/sim/, serwowana pod tym adresem. */
+    static final String SIM_HOST = "sim.vizuapp.local";
+    static final String SIM = "https://" + SIM_HOST + "/";
+    /** Symulator z internetem: zawsze aktualny (GitHub Pages). */
+    static final String SIM_ONLINE = "https://patrykchoinski.github.io/Promasz-Visu3D/";
 
     WebView web;
     SharedPreferences prefs;
@@ -71,6 +77,18 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest req) {
+                Uri u = req.getUrl();
+                if (!SIM_HOST.equals(u.getHost())) return null;
+                String path = u.getPath() == null || u.getPath().equals("/") ? "/index.html" : u.getPath();
+                try {
+                    return new WebResourceResponse(mime(path), "utf-8", getAssets().open("sim" + path));
+                } catch (Exception e) {
+                    return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", new java.util.HashMap<>(), null);
+                }
+            }
+
+            @Override
             public void onPageFinished(WebView v, String url) {
                 if (url != null && url.startsWith("http:")) remember(url);
             }
@@ -93,6 +111,17 @@ public class MainActivity extends Activity {
             String last = prefs.getString("url", null);
             web.loadUrl(last != null ? last : START);
         }
+    }
+
+    static String mime(String path) {
+        if (path.endsWith(".html")) return "text/html";
+        if (path.endsWith(".js")) return "text/javascript";
+        if (path.endsWith(".css")) return "text/css";
+        if (path.endsWith(".png")) return "image/png";
+        if (path.endsWith(".svg")) return "image/svg+xml";
+        if (path.endsWith(".webmanifest")) return "application/manifest+json";
+        if (path.endsWith("/config") || path.endsWith(".json")) return "application/json";
+        return "application/octet-stream";
     }
 
     /** Zapamietuje maszyne (ostatnia + lista znanych adresow do szukania w ich podsieciach). */
@@ -177,6 +206,12 @@ public class MainActivity extends Activity {
         public void open(String url) {
             remember(url);
             ui.post(() -> web.loadUrl(url));
+        }
+
+        /** Symulator: z internetem - GitHub Pages (aktualny), bez - wbudowany w aplikacje. */
+        @JavascriptInterface
+        public void sim(boolean online) {
+            ui.post(() -> web.loadUrl(online ? SIM_ONLINE : SIM));
         }
 
         @JavascriptInterface

@@ -48,6 +48,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.TAG }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Symulator offline (wersja statyczna w assets/sim)
+        run: |
+          npm ci
+          node scripts/build-pages.js
+          mkdir -p android/app/src/main/assets/sim
+          cp -r site/. android/app/src/main/assets/sim/
+          rm -f android/app/src/main/assets/sim/.nojekyll
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
