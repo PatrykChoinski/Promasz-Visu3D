@@ -868,7 +868,6 @@ const KIOSK = new URLSearchParams(location.search).has('kiosk');
 const KIOSK_OFF = ['auto', 'service', 'par', 'speed', 'stone', 'pos'];
 
 function saveForms() {
-  if (KIOSK) return;
   // tryb PLC: formularze pokazuja wartosci z PLC - w przegladarce zostaja wartosci symulacji
   if (!state.forms || state.mode === 'online') return;
   try {
@@ -886,6 +885,7 @@ function saveForms() {
       state.forms.fig = fig.id;
       state.forms.figCtx = readGroup('figctx', FIGURE_CONTEXT_FIELDS);
     }
+    if (KIOSK) return;  // tryb pokazowy: formularze tylko w tej sesji
     localStorage.setItem(STORE_KEY, JSON.stringify({
       units: 'm/min', m: readFields('m'), d: readFields('d'), board: readArea('board'), rock: readArea('rock'), forms: state.forms,
     }));

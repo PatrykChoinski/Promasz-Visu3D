@@ -8,6 +8,7 @@ w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); his
 
 ### Tryb pokazowy do osadzenia na stronie (`?kiosk=1`)
 - Adres `…/Promasz-Visu3D/?kiosk=1`: zalogowany Operator, ekran Manual z elipsą od punktu X 1500 / Y 1000, czysta symulacja (bez zapisanych formularzy w przeglądarce). Ekrany Automat, Serwis, Parametry, Prędkość, Ustawienia, Pozycja widoczne, ale wyszarzone i nieaktywne.
+- Poprawka: w trybie pokazowym zmiany pól (np. punkt elipsy) nie trafiały do symulacji – pomijany jest tylko zapis w przeglądarce.
 
 ## 2026-11-23
 
