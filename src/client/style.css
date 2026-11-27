@@ -640,3 +640,6 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .bar .plcStop .lbl { font-size: 12px; }
   .spacer { display: none; }
 }
+
+/* tryb pokazowy (?kiosk=1): ekrany widoczne, ale nieaktywne */
+body.kiosk #screens button.kioskOff { opacity: .35; filter: grayscale(1); cursor: not-allowed; pointer-events: none; }

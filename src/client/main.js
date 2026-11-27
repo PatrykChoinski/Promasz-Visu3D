@@ -862,7 +862,13 @@ function writeFields(attr, obj) {
   }
 }
 
+// tryb pokazowy do osadzenia na stronie (?kiosk=1): czysta symulacja bez zapisanych formularzy, zalogowany Operator,
+// elipsa od punktu 1500 / 1000, ekrany Automat / Serwis / Parametry / Predkosc / Ustawienia / Pozycja wyszarzone
+const KIOSK = new URLSearchParams(location.search).has('kiosk');
+const KIOSK_OFF = ['auto', 'service', 'par', 'speed', 'stone', 'pos'];
+
 function saveForms() {
+  if (KIOSK) return;
   // tryb PLC: formularze pokazuja wartosci z PLC - w przegladarce zostaja wartosci symulacji
   if (!state.forms || state.mode === 'online') return;
   try {
@@ -894,7 +900,7 @@ function loadForms() {
   writeArea('rock', off.rock);
   state.forms = { op: 'cut', ops: {}, common: defaults(COMMON_FIELDS), millCommon: defaults(MILL_COMMON_FIELDS), auto: demoAuto() };
   try {
-    const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    const saved = KIOSK ? null : JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if (saved) {
       writeFields('m', saved.m || {});
       // starsze zapisy byly w mm/s; puste / zerowe pola (nowe parametry) zostaja z domyslnych
@@ -3556,18 +3562,31 @@ async function init() {
   state.tool.mode = state.cfg.offline.mode || 'saw';
   try { state.tool.mode = localStorage.getItem('vizuapp.toolMode') || state.tool.mode; } catch { /* jw. */ }
   if (!MODES.some((x) => x.id === state.tool.mode)) state.tool.mode = 'saw';
+  if (KIOSK) {
+    document.body.classList.add('kiosk');
+    state.tool.mode = 'saw';
+    const el = OPS.find((o) => o.id === 'ellipse');
+    state.forms.op = 'ellipse';
+    state.forms.modeOp = { saw: 'ellipse' };
+    state.forms.ops.ellipse = { ...defaults(el.fields), xs: 1500, ys: 1000 };
+    for (const t of KIOSK_OFF) {
+      const b = $(`#screens [data-tab="${t}"]`);
+      if (b) { b.disabled = true; b.classList.add('kioskOff'); b.title += ' (niedostępne w wersji pokazowej)'; }
+    }
+  }
   bindUi();
   bindManual();
   bindManWin();
   bindConn();
   bindAlarms();
   await initAuth();
+  if (KIOSK && state.auth.enabled && !state.auth.user) setSession({ user: 'Operator', level: 1, token: DEMO_PREFIX + 'Operator' });
   showOp();
   showFig();
   stoneChanged();
   if (!state.cfg.static) connectEvents();
   let mode = state.cfg.plc ? 'online' : 'offline';
-  try { mode = localStorage.getItem('vizuapp.mode') || mode; } catch { /* jw. */ }
+  try { if (!KIOSK) mode = localStorage.getItem('vizuapp.mode') || mode; } catch { /* jw. */ }
   // wersja statyczna (GitHub Pages, scripts/build-pages.js): bez serwera VizuApp - tylko tryb offline
   if (state.cfg.static) {
     mode = 'offline';
@@ -3575,6 +3594,7 @@ async function init() {
     $('#mode [data-mode="offline"]').title = 'Wersja statyczna (GitHub Pages) - symulacja bez PLC; online tylko z serwerem VizuApp na maszynie';
   }
   setMode(mode);
+  if (KIOSK) showTab('cut');
   clientLog('ok');
 }
 

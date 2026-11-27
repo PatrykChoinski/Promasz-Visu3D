@@ -4,6 +4,11 @@ Zmiany w Promasz Visu3D (VizuApp) – wizualizacji cięcia piły mostowej Promas
 (zgłoszenie [#128](https://github.com/Induprogress/Promasz_PilaJednosuportowa/issues/128)
 w repo głównym). Do 2026-10-21 aplikacja była w repo HMI (`HMI/VizuApp`); historia commitów została przeniesiona tutaj.
 
+## 2026-11-27
+
+### Tryb pokazowy do osadzenia na stronie (`?kiosk=1`)
+- Adres `…/Promasz-Visu3D/?kiosk=1`: zalogowany Operator, ekran Manual z elipsą od punktu X 1500 / Y 1000, czysta symulacja (bez zapisanych formularzy w przeglądarce). Ekrany Automat, Serwis, Parametry, Prędkość, Ustawienia, Pozycja widoczne, ale wyszarzone i nieaktywne.
+
 ## 2026-11-23
 
 ### Android: logowanie z hasłem w symulatorze (v1.0.6)
